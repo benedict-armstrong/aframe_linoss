@@ -7,7 +7,7 @@ authors = [
     { name = "William Benoit", email = "benoi090@umn.edu" },
     { name = "Alec Gunny", email = "alec.gunny@ligo.org" },
 ]
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "luigi~=3.0",
     "utils",
@@ -21,6 +21,7 @@ dependencies = [
     "cloudpathlib>=0.18.1,<0.19",
     "psutil>=5.9.8,<6",
     "jsonargparse>=4.27.1,<5",
+    "damped-linoss",
 ]
 
 [project.scripts]
@@ -50,6 +51,7 @@ default-groups = [
 
 [tool.uv.sources]
 utils = { path = "./libs/utils", editable = true }
+damped-linoss = { path = "../TritonLinOSS", editable = true }
 
 [build-system]
 requires = ["hatchling"]
