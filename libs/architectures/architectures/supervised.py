@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 
 from architectures import Architecture
-from architectures.networks import S4Model, WaveNet, Xylophone
+from architectures.networks import S4Model, WaveNet, Xylophone, LinOSSModel
 from jaxtyping import Float
 from ml4gw.nn.resnet.resnet_1d import NormLayer, ResNet1D
 from ml4gw.nn.resnet.resnet_2d import ResNet2D
@@ -226,3 +226,26 @@ class SupervisedMultiModalResNet(SupervisedArchitecture):
         freq_domain_output = self.freq_psd_resnet(X_fft)
         concat = torch.cat([time_domain_output, freq_domain_output], dim=-1)
         return self.classifier(concat)
+
+
+class SupervisedLinOSSModel(LinOSSModel, SupervisedArchitecture):
+    def __init__(
+        self,
+        num_ifos: int,
+        layer_name: Literal["IMEX", "IM", "Damped"] = "Damped",
+        state_dim: int = 64,
+        hidden_dim: int = 128,
+        output_dim: int = 2,
+        num_blocks: int = 3,
+    ) -> None:
+        super().__init__(
+            layer_name=layer_name,
+            input_dim=num_ifos,
+            state_dim=state_dim,
+            hidden_dim=hidden_dim,
+            output_dim=output_dim,
+            num_blocks=num_blocks,
+            classification=True,
+            tanh_output=False,
+            output_step=1,
+        )

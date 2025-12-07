@@ -1,0 +1,115 @@
+# Custom S4 training configuration
+model:
+  class_path: train.model.SupervisedLinOSSModel
+  init_args:
+    # architecture
+    arch:
+      class_path: architectures.supervised.SupervisedLinOSSModel
+      init_args:
+        state_dim: 64
+        hidden_dim: 128
+        output_dim: 2
+        num_blocks: 3
+    metric:
+      class_path: train.metrics.TimeSlideAUROC
+      init_args:
+        max_fpr: 1e-3
+        pool_length: 8
+
+    # optimization params
+    weight_decay: 0.01
+    learning_rate: 0.0005
+    pct_lr_ramp: 0.1
+    # early stop
+    patience: null
+
+data:
+  class_path: train.data.supervised.SpectrogramDomainSupervisedAframeDataset
+  init_args:
+    # loading args
+    # data_dir:
+    # ifos:
+    batches_per_epoch: 200
+    chunk_size: 10000
+    chunks_per_epoch: 10
+    # preprocessing args
+    batch_size: 576
+    # kernel_length:
+    psd_length: 8
+    # fduration:
+    # highpass:
+    # lowpass:
+    fftlength: null
+
+    # augmentation args
+    waveform_prob: 0.277
+    swap_prob: 0.014
+    mute_prob: 0.055
+    left_pad: 0.25
+    right_pad: 0.05
+    snr_sampler:
+      class_path: ml4gw.distributions.PowerLaw
+      init_args:
+        minimum: 10
+        maximum: 100
+        index: -3
+    spectrogram_shape: [64, 128]
+    q:
+      45.6
+      # uncomment below and comment above for
+      # snr scheduling
+
+      # class_path: train.augmentations.SnrSampler
+      # init_args:
+      # max_min_snr: 12
+      # min_min_snr: 4
+      # max_snr: 100
+      # alpha: -3
+      # decay_steps: 989
+    # validation args
+    valid_stride: 0.5
+    num_valid_views: 5
+    valid_livetime: 57600
+trainer:
+  # by default, use a local CSV logger.
+  # note that you can use multiple loggers!
+  # Options in train task for appending
+  # a wandb logger for remote logging.
+  logger:
+    - class_path: lightning.pytorch.loggers.CSVLogger
+      init_args:
+        # save_dir:
+        flush_logs_every_n_steps: 10
+        name: "train_logs"
+
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: "valid_auroc"
+        mode: "max"
+        patience: 50
+    # custom model checkpoint for saving and
+    # tracing best model at end of traiing
+    # that will be used for downstream export
+    - class_path: train.callbacks.ModelCheckpoint
+      init_args:
+        monitor: "valid_auroc"
+        mode: "max"
+        save_top_k: 1
+        save_last: true
+        auto_insert_metric_name: false
+    - class_path: train.callbacks.SaveAugmentedBatch
+  # uncomment below if you want to profile
+  # profiler:
+  # class_path: lightning.pytorch.profilers.PyTorchProfiler
+  # dict_kwargs:
+  # profile_memory: true
+  # devices:
+  # strategy: set to ddp if len(devices) > 1
+  #precision: 16-mixed
+  accelerator: auto
+  max_epochs: 200
+  check_val_every_n_epoch: 1
+  log_every_n_steps: 20
+  enable_progress_bar: true
+  benchmark: true

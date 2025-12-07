@@ -51,7 +51,7 @@ default-groups = [
 
 [tool.uv.sources]
 utils = { path = "./libs/utils", editable = true }
-damped-linoss = { path = "../TritonLinOSS", editable = true }
+damped-linoss = { git = "https://github.com/KasraMazaheri/TritonLinOSS" }
 
 [build-system]
 requires = ["hatchling"]
