@@ -11,6 +11,10 @@ Stage: build
 ../../pyproject.toml /opt/aframe/pyproject.toml
 
 %post
+# --- FIX START ---
+# Fix /tmp permissions so 'apt' and '_apt' user can write temporary GPG files
+chmod 1777 /tmp
+# --- FIX END ---
 mkdir -p /cvmfs /hdfs /gpfs /ceph /hadoop
 
 # install git for pip installation
@@ -46,6 +50,10 @@ micromamba shell init --shell=bash --root-prefix=~/micromamba
 # is invoked
 export PATH=/opt/env/bin:$PATH
 echo export PATH=$PATH >> /etc/profile
+
+%environment
+    export PATH=/opt/env/bin:$PATH
+    export CONDA_PREFIX=/opt/env
 
 
 %runscript
