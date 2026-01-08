@@ -32,14 +32,17 @@ class DeployInferLocal(InferBase):
         """
         Get the local nodes cluster-internal IP address
         """
-        for _, addrs in psutil.net_if_addrs().items():
-            for addr in addrs:
-                if (
-                    addr.family == socket.AF_INET
-                    and not addr.address.startswith("127.")
-                ):
-                    return addr.address
-        raise ValueError("No valid IP address found")
+        # for _, addrs in psutil.net_if_addrs().items():
+        #     for addr in addrs:
+        #         if (
+        #             addr.family == socket.AF_INET
+        #             and not addr.address.startswith("127.")
+        #         ):
+        #             return addr.address
+        # raise ValueError("No valid IP address found")
+        hostname = socket.gethostname() + ".internal.cluster.is.localnet"
+        print(f"Hostname: {hostname}")
+        return hostname
 
     @property
     def model_repo_dir(self):
