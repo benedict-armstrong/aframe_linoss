@@ -125,7 +125,7 @@ class InferBase(
 
     def workflow_requires(self):
         reqs = {}
-        reqs["model_repository"] = ExportLocal.req(self)
+        # reqs["model_repository"] = ExportLocal.req(self)
         testing_waveforms = TestingWaveforms.req(self)
         fetch = testing_waveforms.requires().workflow_requires()[
             "test_segments"

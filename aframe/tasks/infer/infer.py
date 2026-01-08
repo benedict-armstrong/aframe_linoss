@@ -43,7 +43,8 @@ class DeployInferLocal(InferBase):
 
     @property
     def model_repo_dir(self):
-        return self.input()["model_repository"].path
+        # return self.input()["model_repository"].path
+        return "/home/barmstrong/aframe_new/runs/model_repository"
 
     def htcondor_workflow_run_context(self):
         """
