@@ -14,8 +14,8 @@ class LDGCondorWorkflow(htcondor.HTCondorWorkflow):
     """
 
     condor_directory = PathParameter()
-    accounting_group_user = luigi.Parameter(default=os.getenv("LIGO_USERNAME"))
-    accounting_group = luigi.Parameter(default=os.getenv("LIGO_GROUP"))
+    # accounting_group_user = luigi.Parameter(default=os.getenv("LIGO_USERNAME"))
+    # accounting_group = luigi.Parameter(default=os.getenv("LIGO_GROUP"))
     request_disk = luigi.Parameter(default="1024 Kb")
     request_memory = luigi.Parameter(default="3267 Mb")
     request_cpus = luigi.IntParameter(default=1)
@@ -116,16 +116,16 @@ class LDGCondorWorkflow(htcondor.HTCondorWorkflow):
         environment = self.build_environment()
         environment += '"'
 
-        config.custom_content.append(("use_oauth_services", "scitokens"))
+        # config.custom_content.append(("use_oauth_services", "scitokens"))
         config.custom_content.append(("environment", environment))
         config.custom_content.append(("stream_error", "True"))
         config.custom_content.append(("stream_output", "True"))
-        config.custom_content.append(
-            ("accounting_group", self.accounting_group)
-        )
-        config.custom_content.append(
-            ("accounting_group_user", self.accounting_group_user)
-        )
+        # config.custom_content.append(
+        #     ("accounting_group", self.accounting_group)
+        # )
+        # config.custom_content.append(
+        #     ("accounting_group_user", self.accounting_group_user)
+        # )
         config.custom_content.append(("request_disk", self.request_disk))
         config.custom_content.append(("request_cpus", self.request_cpus))
         self.append_memory(config)
