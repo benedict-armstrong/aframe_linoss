@@ -56,6 +56,14 @@ class Sequence:
         self.rate = rate
         self.ifos = ifos
 
+        print(
+            f"Initializing sequence with background file {background_fname}"
+            f" and injection set file {injection_set_fname}"
+            f" for ifos {ifos} and shifts {shifts}"
+            f" at inference sampling rate {inference_sampling_rate}"
+            f" and batch size {batch_size}"
+        )
+
         if len(ifos) != len(shifts):
             raise ValueError(
                 "Number of ifos must match number of shifts"
@@ -210,9 +218,7 @@ class Sequence:
                 x_inj = None
                 offset = i * self.batch_size / self.inference_sampling_rate
                 if self.injection_set is not None:
-                    x_inj = self.injection_set.inject(
-                        x.copy(), self.t0 + offset
-                    )
+                    x_inj = self.injection_set.inject(x.copy(), self.t0 + offset)
 
                 # return the two sets of updates, possibly
                 # rate limited if we specified a max rate

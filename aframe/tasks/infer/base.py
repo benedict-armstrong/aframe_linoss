@@ -121,6 +121,7 @@ class InferBase(
 
     @property
     def injection_set_fname(self):
+        print(self.workflow_input()["waveforms"][0].path)
         return self.workflow_input()["waveforms"][0].path
 
     def workflow_requires(self):

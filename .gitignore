@@ -5,3 +5,5 @@
 **/id_rsa
 **/*.hdf5
 **/*.ipynb
+
+data

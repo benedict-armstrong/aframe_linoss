@@ -1,0 +1,843 @@
+qApptainer> tritonserver --model-repository=runs/model_repository --log-verbose=1
+I0111 11:11:32.807040 1624646 cache_manager.cc:478] Create CacheManager with cache_dir: '/opt/tritonserver/caches'
+I0111 11:11:33.124995 1624646 pinned_memory_manager.cc:240] Pinned memory pool is created at '0x148c8e000000' with size 268435456
+I0111 11:11:33.125727 1624646 cuda_memory_manager.cc:105] CUDA memory pool is created on device 0 with size 67108864
+I0111 11:11:33.158612 1624646 model_config_utils.cc:646] Server side auto-completed config: name: "aframe"
+input {
+  name: "X"
+  data_type: TYPE_FP32
+  dims: 128
+  dims: 2
+  dims: 16384
+}
+output {
+  name: "discriminator"
+  data_type: TYPE_FP32
+  dims: 128
+  dims: 1
+}
+instance_group {
+  count: 1
+  kind: KIND_GPU
+}
+default_model_filename: "model.py"
+optimization {
+  graph {
+    level: -1
+  }
+}
+backend: "python"
+
+I0111 11:11:33.160173 1624646 model_config_utils.cc:646] Server side auto-completed config: name: "aframe-stream"
+platform: "ensemble"
+input {
+  name: "stream"
+  data_type: TYPE_FP32
+  dims: 2
+  dims: 2
+  dims: 16384
+}
+output {
+  name: "discriminator"
+  data_type: TYPE_FP32
+  dims: 128
+  dims: 1
+}
+ensemble_scheduling {
+  step {
+    model_name: "snapshotter"
+    model_version: -1
+    input_map {
+      key: "stream"
+      value: "stream"
+    }
+    output_map {
+      key: "strain"
+      value: "strain"
+    }
+  }
+  step {
+    model_name: "preprocessor"
+    model_version: -1
+    input_map {
+      key: "strain"
+      value: "strain"
+    }
+    output_map {
+      key: "X"
+      value: "X"
+    }
+  }
+  step {
+    model_name: "aframe"
+    model_version: -1
+    input_map {
+      key: "X"
+      value: "X"
+    }
+    output_map {
+      key: "discriminator"
+      value: "discriminator"
+    }
+  }
+}
+
+I0111 11:11:33.161971 1624646 model_config_utils.cc:646] Server side auto-completed config: name: "preprocessor"
+platform: "pytorch_libtorch"
+input {
+  name: "strain"
+  data_type: TYPE_FP32
+  dims: 2
+  dims: 2
+  dims: 100224
+}
+output {
+  name: "X"
+  data_type: TYPE_FP32
+  dims: 128
+  dims: 2
+  dims: 16384
+}
+default_model_filename: "model.pt"
+backend: "pytorch"
+
+I0111 11:11:33.163702 1624646 model_config_utils.cc:646] Server side auto-completed config: name: "snapshotter"
+platform: "onnxruntime_onnx"
+input {
+  name: "stream"
+  data_type: TYPE_FP32
+  dims: 2
+  dims: 2
+  dims: 16384
+}
+output {
+  name: "strain"
+  data_type: TYPE_FP32
+  dims: 2
+  dims: 2
+  dims: 100224
+}
+instance_group {
+  count: 1
+  kind: KIND_GPU
+}
+default_model_filename: "model.onnx"
+sequence_batching {
+  max_sequence_idle_microseconds: 60000000000
+  direct {
+  }
+  state {
+    input_name: "input_snapshot"
+    output_name: "output_snapshot"
+    data_type: TYPE_FP32
+    dims: 2
+    dims: 2
+    dims: 83840
+    initial_state {
+      data_type: TYPE_FP32
+      dims: 2
+      dims: 2
+      dims: 83840
+      zero_data: true
+      name: "snapshot"
+    }
+  }
+}
+backend: "onnxruntime"
+
+I0111 11:11:33.163946 1624646 model_lifecycle.cc:459] loading: snapshotter:1
+I0111 11:11:33.164111 1624646 model_lifecycle.cc:459] loading: preprocessor:1
+I0111 11:11:33.164112 1624646 backend_model.cc:317] Adding default backend config setting: default-max-batch-size,4
+I0111 11:11:33.164183 1624646 shared_library.cc:112] OpenLibraryHandle: /opt/tritonserver/backends/onnxruntime/libtriton_onnxruntime.so
+I0111 11:11:33.164322 1624646 backend_model.cc:317] Adding default backend config setting: default-max-batch-size,4
+I0111 11:11:33.165524 1624646 onnxruntime.cc:2504] TRITONBACKEND_Initialize: onnxruntime
+I0111 11:11:33.165538 1624646 onnxruntime.cc:2514] Triton TRITONBACKEND API version: 1.12
+I0111 11:11:33.165542 1624646 onnxruntime.cc:2520] 'onnxruntime' TRITONBACKEND API version: 1.12
+I0111 11:11:33.165546 1624646 onnxruntime.cc:2550] backend configuration:
+{"cmdline":{"auto-complete-config":"true","backend-directory":"/opt/tritonserver/backends","min-compute-capability":"6.000000","default-max-batch-size":"4"}}
+I0111 11:11:33.165667 1624646 model_lifecycle.cc:459] loading: aframe:1
+I0111 11:11:33.165794 1624646 backend_model.cc:317] Adding default backend config setting: default-max-batch-size,4
+I0111 11:11:33.207299 1624646 shared_library.cc:112] OpenLibraryHandle: /opt/tritonserver/backends/pytorch/libtriton_pytorch.so
+I0111 11:11:33.210246 1624646 onnxruntime.cc:2608] TRITONBACKEND_ModelInitialize: snapshotter (version 1)
+I0111 11:11:33.210887 1624646 model_config_utils.cc:1838] ModelConfig 64-bit fields:
+I0111 11:11:33.210897 1624646 model_config_utils.cc:1840]       ModelConfig::dynamic_batching::default_queue_policy::default_timeout_microseconds
+I0111 11:11:33.210901 1624646 model_config_utils.cc:1840]       ModelConfig::dynamic_batching::max_queue_delay_microseconds
+I0111 11:11:33.210919 1624646 model_config_utils.cc:1840]       ModelConfig::dynamic_batching::priority_queue_policy::value::default_timeout_microseconds
+I0111 11:11:33.210923 1624646 model_config_utils.cc:1840]       ModelConfig::ensemble_scheduling::step::model_version
+I0111 11:11:33.210926 1624646 model_config_utils.cc:1840]       ModelConfig::input::dims
+I0111 11:11:33.210930 1624646 model_config_utils.cc:1840]       ModelConfig::input::reshape::shape
+I0111 11:11:33.210934 1624646 model_config_utils.cc:1840]       ModelConfig::instance_group::secondary_devices::device_id
+I0111 11:11:33.210937 1624646 model_config_utils.cc:1840]       ModelConfig::model_warmup::inputs::value::dims
+I0111 11:11:33.210946 1624646 model_config_utils.cc:1840]       ModelConfig::optimization::cuda::graph_spec::graph_lower_bound::input::value::dim
+I0111 11:11:33.210949 1624646 model_config_utils.cc:1840]       ModelConfig::optimization::cuda::graph_spec::input::value::dim
+I0111 11:11:33.210954 1624646 model_config_utils.cc:1840]       ModelConfig::output::dims
+I0111 11:11:33.210958 1624646 model_config_utils.cc:1840]       ModelConfig::output::reshape::shape
+I0111 11:11:33.210964 1624646 model_config_utils.cc:1840]       ModelConfig::sequence_batching::direct::max_queue_delay_microseconds
+I0111 11:11:33.210968 1624646 model_config_utils.cc:1840]       ModelConfig::sequence_batching::max_sequence_idle_microseconds
+I0111 11:11:33.210973 1624646 model_config_utils.cc:1840]       ModelConfig::sequence_batching::oldest::max_queue_delay_microseconds
+I0111 11:11:33.210978 1624646 model_config_utils.cc:1840]       ModelConfig::sequence_batching::state::dims
+I0111 11:11:33.210983 1624646 model_config_utils.cc:1840]       ModelConfig::sequence_batching::state::initial_state::dims
+I0111 11:11:33.210987 1624646 model_config_utils.cc:1840]       ModelConfig::version_policy::specific::versions
+I0111 11:11:33.211122 1624646 onnxruntime.cc:666] skipping model configuration auto-complete for 'snapshotter': inputs and outputs already specified
+I0111 11:11:33.212113 1624646 onnxruntime.cc:2651] TRITONBACKEND_ModelInstanceInitialize: snapshotter_0 (GPU device 0)
+I0111 11:11:33.216486 1624646 backend_model_instance.cc:105] Creating instance snapshotter_0 on GPU 0 (8.0) using artifact 'model.onnx'
+I0111 11:11:33.726751 1624646 libtorch.cc:2008] TRITONBACKEND_Initialize: pytorch
+I0111 11:11:33.726782 1624646 libtorch.cc:2018] Triton TRITONBACKEND API version: 1.12
+I0111 11:11:33.726787 1624646 libtorch.cc:2024] 'pytorch' TRITONBACKEND API version: 1.12
+I0111 11:11:33.726840 1624646 shared_library.cc:112] OpenLibraryHandle: /opt/tritonserver/backends/python/libtriton_python.so
+I0111 11:11:33.727471 1624646 libtorch.cc:2057] TRITONBACKEND_ModelInitialize: preprocessor (version 1)
+W0111 11:11:33.727883 1624646 libtorch.cc:284] skipping model configuration auto-complete for 'preprocessor': not supported for pytorch backend
+I0111 11:11:33.728322 1624646 libtorch.cc:313] Optimized execution is enabled for model instance 'preprocessor'
+I0111 11:11:33.728333 1624646 libtorch.cc:332] Cache Cleaning is disabled for model instance 'preprocessor'
+I0111 11:11:33.728380 1624646 libtorch.cc:349] Inference Mode is disabled for model instance 'preprocessor'
+I0111 11:11:33.728385 1624646 libtorch.cc:443] NvFuser is not specified for model instance 'preprocessor'
+I0111 11:11:33.728483 1624646 libtorch.cc:2101] TRITONBACKEND_ModelInstanceInitialize: preprocessor (GPU device 0)
+I0111 11:11:33.728779 1624646 backend_model_instance.cc:105] Creating instance preprocessor on GPU 0 (8.0) using artifact 'model.pt'
+I0111 11:11:33.737658 1624646 python_be.cc:1733] 'python' TRITONBACKEND API version: 1.12
+I0111 11:11:33.737685 1624646 python_be.cc:1755] backend configuration:
+{"cmdline":{"auto-complete-config":"true","backend-directory":"/opt/tritonserver/backends","min-compute-capability":"6.000000","default-max-batch-size":"4"}}
+I0111 11:11:33.737720 1624646 python_be.cc:1885] Shared memory configuration is shm-default-byte-size=67108864,shm-growth-byte-size=67108864,stub-timeout-seconds=30
+I0111 11:11:33.737900 1624646 python_be.cc:2131] TRITONBACKEND_GetBackendAttribute: setting attributes
+I0111 11:11:33.738645 1624646 python_be.cc:1933] TRITONBACKEND_ModelInitialize: aframe (version 1)
+I0111 11:11:33.759196 1624646 onnxruntime.cc:553] CUDA Execution Accelerator is set for 'snapshotter' on device 0
+2026-01-11 12:11:33.764551793 [I:onnxruntime:, inference_session.cc:268 operator()] Flush-to-zero and denormal-as-zero are off
+2026-01-11 12:11:33.764587693 [I:onnxruntime:, inference_session.cc:276 ConstructorCommon] Creating and using per session threadpools since use_per_session_threads_ is true
+2026-01-11 12:11:33.764596842 [I:onnxruntime:, inference_session.cc:294 ConstructorCommon] Dynamic block base set to 0
+I0111 11:11:33.768229 1624646 stub_launcher.cc:257] Starting Python backend stub:  exec /opt/tritonserver/backends/python/triton_python_backend_stub runs/model_repository/aframe/1/model.py triton_python_backend_shm_region_1 67108864 67108864 1624646 /opt/tritonserver/backends/python 336 aframe
+2026-01-11 12:11:33.768515453 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627786, index: 13, mask: {14, 142, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.768644273 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627779, index: 6, mask: {7, 135, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.772142837 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627781, index: 8, mask: {9, 137, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.780151947 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627778, index: 5, mask: {6, 134, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.784116077 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627780, index: 7, mask: {8, 136, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.813390821 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627776, index: 3, mask: {4, 132, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.816384359 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627775, index: 2, mask: {3, 131, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.816824355 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627783, index: 10, mask: {11, 139, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.820147821 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627774, index: 1, mask: {2, 130, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.824302789 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627773, index: 0, mask: {1, 129, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.832117921 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627782, index: 9, mask: {10, 138, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.832263540 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627784, index: 11, mask: {12, 140, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.839377538 [I:onnxruntime:, inference_session.cc:1233 Initialize] Initializing session.
+2026-01-11 12:11:33.839389228 [I:onnxruntime:, inference_session.cc:1270 Initialize] Adding default CPU execution provider.
+2026-01-11 12:11:33.839453127 [I:onnxruntime:log, bfc_arena.cc:27 BFCArena] Creating BFCArena for Cuda with following configs: initial_chunk_size_bytes: 1048576 max_dead_bytes_per_chunk: 134217728 initial_growth_chunk_size_bytes: 2097152 memory limit: 18446744073709551615 arena_extend_strategy: 0
+2026-01-11 12:11:33.839462917 [V:onnxruntime:log, bfc_arena.cc:63 BFCArena] Creating 21 bins of max chunk size 256 to 268435456
+2026-01-11 12:11:33.839501397 [I:onnxruntime:log, bfc_arena.cc:27 BFCArena] Creating BFCArena for CudaPinned with following configs: initial_chunk_size_bytes: 1048576 max_dead_bytes_per_chunk: 134217728 initial_growth_chunk_size_bytes: 2097152 memory limit: 18446744073709551615 arena_extend_strategy: 0
+2026-01-11 12:11:33.839509177 [V:onnxruntime:log, bfc_arena.cc:63 BFCArena] Creating 21 bins of max chunk size 256 to 268435456
+2026-01-11 12:11:33.839515177 [I:onnxruntime:log, bfc_arena.cc:27 BFCArena] Creating BFCArena for CUDA_CPU with following configs: initial_chunk_size_bytes: 1048576 max_dead_bytes_per_chunk: 134217728 initial_growth_chunk_size_bytes: 2097152 memory limit: 18446744073709551615 arena_extend_strategy: 0
+2026-01-11 12:11:33.839519937 [V:onnxruntime:log, bfc_arena.cc:63 BFCArena] Creating 21 bins of max chunk size 256 to 268435456
+2026-01-11 12:11:33.839528197 [I:onnxruntime:log, bfc_arena.cc:27 BFCArena] Creating BFCArena for Cpu with following configs: initial_chunk_size_bytes: 1048576 max_dead_bytes_per_chunk: 134217728 initial_growth_chunk_size_bytes: 2097152 memory limit: 18446744073709551615 arena_extend_strategy: 0
+2026-01-11 12:11:33.839533447 [V:onnxruntime:log, bfc_arena.cc:63 BFCArena] Creating 21 bins of max chunk size 256 to 268435456
+2026-01-11 12:11:33.841394673 [I:onnxruntime:, constant_sharing.cc:208 ApplyImpl] Total shared scalar initializer count: 0
+2026-01-11 12:11:33.841520102 [I:onnxruntime:, reshape_fusion.cc:53 ApplyImpl] Total fused reshape node count: 0
+2026-01-11 12:11:33.841543622 [I:onnxruntime:, constant_sharing.cc:208 ApplyImpl] Total shared scalar initializer count: 0
+2026-01-11 12:11:33.841555172 [I:onnxruntime:, reshape_fusion.cc:53 ApplyImpl] Total fused reshape node count: 0
+2026-01-11 12:11:33.841916399 [V:onnxruntime:, session_state.cc:1116 VerifyEachNodeIsAssignedToAnEp] Node placements
+2026-01-11 12:11:33.841925629 [V:onnxruntime:, session_state.cc:1119 VerifyEachNodeIsAssignedToAnEp]  All nodes placed on [CUDAExecutionProvider]. Number of nodes: 2
+2026-01-11 12:11:33.841977749 [V:onnxruntime:, session_state.cc:133 CreateGraphInfo] SaveMLValueNameIndexMapping
+2026-01-11 12:11:33.841995228 [V:onnxruntime:, session_state.cc:179 CreateGraphInfo] Done saving OrtValue mappings.
+2026-01-11 12:11:33.842149447 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627787, index: 14, mask: {15, 143, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.844152113 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627945, index: 17, mask: {18, 146, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.848145713 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627947, index: 19, mask: {20, 148, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.848168113 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627788, index: 15, mask: {16, 144, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.872433993 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627946, index: 18, mask: {19, 147, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.880131206 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627944, index: 16, mask: {17, 145, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.884118516 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627777, index: 4, mask: {5, 133, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.888136826 [V:onnxruntime:log, env.cc:246 ThreadMain] pthread_setaffinity_np succeed for thread: 1627952, index: 24, mask: {25, 153, }
+2026-01-11 12:11:33.896195877 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627785, index: 12, mask: {13, 141, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.904136157 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627974, index: 46, mask: {47, 175, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.908127828 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628001, index: 73, mask: {74, 202, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.912128918 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627991, index: 63, mask: {64, 192, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.916116239 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628003, index: 75, mask: {76, 204, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.920124209 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628004, index: 76, mask: {77, 205, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.924113160 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627986, index: 58, mask: {59, 187, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.928121490 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628017, index: 89, mask: {90, 218, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.932113071 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628016, index: 88, mask: {89, 217, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.936122781 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627992, index: 64, mask: {65, 193, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.940129640 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628015, index: 87, mask: {88, 216, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.944124381 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628022, index: 94, mask: {95, 223, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.948132931 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628024, index: 96, mask: {97, 225, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.952130992 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627975, index: 47, mask: {48, 176, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.956114012 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627996, index: 68, mask: {69, 197, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.960129072 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627987, index: 59, mask: {60, 188, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.964120593 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628025, index: 97, mask: {98, 226, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.968126793 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628026, index: 98, mask: {99, 227, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.972117324 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628013, index: 85, mask: {86, 214, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.976141984 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628011, index: 83, mask: {84, 212, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.980116504 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627998, index: 70, mask: {71, 199, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.988174434 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627997, index: 69, mask: {70, 198, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.992131805 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627960, index: 32, mask: {33, 161, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:33.996124126 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627963, index: 35, mask: {36, 164, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.000134306 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627962, index: 34, mask: {35, 163, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.016115098 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627999, index: 71, mask: {72, 200, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.032142518 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627961, index: 33, mask: {34, 162, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.040114299 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628018, index: 90, mask: {91, 219, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.048137580 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627970, index: 42, mask: {43, 171, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.052132901 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627958, index: 30, mask: {31, 159, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.072141292 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627967, index: 39, mask: {40, 168, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.076119902 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627965, index: 37, mask: {38, 166, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.088142163 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627969, index: 41, mask: {42, 170, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.092141944 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627983, index: 55, mask: {56, 184, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.100148624 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627973, index: 45, mask: {46, 174, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.104182104 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628000, index: 72, mask: {73, 201, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.112130375 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627971, index: 43, mask: {44, 172, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.116157145 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627982, index: 54, mask: {55, 183, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.124131147 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627957, index: 29, mask: {30, 158, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.128150667 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628027, index: 99, mask: {100, 228, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.136161897 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627964, index: 36, mask: {37, 165, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.140137927 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628014, index: 86, mask: {87, 215, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.148143288 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627968, index: 40, mask: {41, 169, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.152139159 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628020, index: 92, mask: {93, 221, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.156184019 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627955, index: 27, mask: {28, 156, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.160135159 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627989, index: 61, mask: {62, 190, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.168142860 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627972, index: 44, mask: {45, 173, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.172111331 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627994, index: 66, mask: {67, 195, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.180152751 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627966, index: 38, mask: {39, 167, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.184120911 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627981, index: 53, mask: {54, 182, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.192150952 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627956, index: 28, mask: {29, 157, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.196113573 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628019, index: 91, mask: {92, 220, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.204144143 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627953, index: 25, mask: {26, 154, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.208119504 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628009, index: 81, mask: {82, 210, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.212182874 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627980, index: 52, mask: {53, 181, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.216184963 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628010, index: 82, mask: {83, 211, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.220120744 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627950, index: 22, mask: {23, 151, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.224132745 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628002, index: 74, mask: {75, 203, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.228119585 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627954, index: 26, mask: {27, 155, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.232123515 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628012, index: 84, mask: {85, 213, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.236133876 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628029, index: 101, mask: {102, 230, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.240118516 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627949, index: 21, mask: {22, 150, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.244120387 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627988, index: 60, mask: {61, 189, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.248143357 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628028, index: 100, mask: {101, 229, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.252121618 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628048, index: 113, mask: {114, 242, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.256131647 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627995, index: 67, mask: {68, 196, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.260136128 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628044, index: 111, mask: {112, 240, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.260176737 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627984, index: 56, mask: {57, 185, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.264145528 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628034, index: 106, mask: {107, 235, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.268152458 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627977, index: 49, mask: {50, 178, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.272131129 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628039, index: 109, mask: {110, 238, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.276150399 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628023, index: 95, mask: {96, 224, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.280132220 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628066, index: 122, mask: {123, 251, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.284119120 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628057, index: 117, mask: {118, 246, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.288145940 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627985, index: 57, mask: {58, 186, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.292131030 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628069, index: 125, mask: {126, 254, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.296179130 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627990, index: 62, mask: {63, 191, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.300134021 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628065, index: 121, mask: {122, 250, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.304145151 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627976, index: 48, mask: {49, 177, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.308136362 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627979, index: 51, mask: {52, 180, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.312139302 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628005, index: 77, mask: {78, 206, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.316122933 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628070, index: 126, mask: {127, 255, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.320141413 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628052, index: 115, mask: {116, 244, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.324117564 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628037, index: 108, mask: {109, 237, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.328136424 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628008, index: 80, mask: {81, 209, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.332121734 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628050, index: 114, mask: {115, 243, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.336138624 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628033, index: 105, mask: {106, 234, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.340116724 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628067, index: 123, mask: {124, 252, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.344114185 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628061, index: 119, mask: {120, 248, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.348125485 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628063, index: 120, mask: {121, 249, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.352120846 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628068, index: 124, mask: {125, 253, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.356181566 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628007, index: 79, mask: {80, 208, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.360124047 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628006, index: 78, mask: {79, 207, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.364119197 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628032, index: 104, mask: {105, 233, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.368142437 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628055, index: 116, mask: {117, 245, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.372117077 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628030, index: 102, mask: {103, 231, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.376171357 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628046, index: 112, mask: {113, 241, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.380113338 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627948, index: 20, mask: {21, 149, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.384110828 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628031, index: 103, mask: {104, 232, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.388118159 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628041, index: 110, mask: {111, 239, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.392110789 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628059, index: 118, mask: {119, 247, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.356147356 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628035, index: 107, mask: {108, 236, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.356143336 [V:onnxruntime:log, env.cc:246 ThreadMain] pthread_setaffinity_np succeed for thread: 1627951, index: 23, mask: {24, 152, }
+2026-01-11 12:11:34.404114330 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627959, index: 31, mask: {32, 160, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.424113222 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627978, index: 50, mask: {51, 179, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.564151744 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1627993, index: 65, mask: {66, 194, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:34.580119675 [E:onnxruntime:log, env.cc:251 ThreadMain] pthread_setaffinity_np failed for thread: 1628021, index: 93, mask: {94, 222, }, error code: 22 error msg: Invalid argument. Specify the number of threads explicitly so the affinity is not set.
+2026-01-11 12:11:35.144531470 [I:onnxruntime:, allocation_planner.cc:2413 CreateGraphPartitioner] Use DeviceBasedPartition as default
+2026-01-11 12:11:35.144606989 [I:onnxruntime:, session_state_utils.cc:199 SaveInitializedTensors] Saving initialized tensors.
+2026-01-11 12:11:35.144628479 [I:onnxruntime:log, bfc_arena.cc:339 AllocateRawInternal] Extending BFCArena for Cpu. bin_num:0 (requested) num_bytes: 8 (actual) rounded_bytes:256
+2026-01-11 12:11:35.144638329 [I:onnxruntime:log, bfc_arena.cc:198 Extend] Extended allocation by 1048576 bytes.
+2026-01-11 12:11:35.144643149 [I:onnxruntime:log, bfc_arena.cc:201 Extend] Total allocated bytes: 1048576
+2026-01-11 12:11:35.144647859 [I:onnxruntime:log, bfc_arena.cc:204 Extend] Allocated memory at 0x148c4cee8020 to 0x148c4cfe8020
+2026-01-11 12:11:35.144682449 [I:onnxruntime:, session_state_utils.cc:342 SaveInitializedTensors] Done saving initialized tensors
+2026-01-11 12:11:35.144706379 [I:onnxruntime:, inference_session.cc:1521 Initialize] Session successfully initialized.
+I0111 11:11:35.181697 1624646 backend_model_instance.cc:782] Starting backend thread for snapshotter_0 at nice 0 on device 0...
+I0111 11:11:35.182086 1624646 pinned_memory_manager.cc:161] pinned memory allocation: size 1341440, addr 0x148c8e000090
+I0111 11:11:35.182353 1624646 model_lifecycle.cc:694] successfully loaded 'snapshotter' version 1
+I0111 11:11:35.183959 1624646 sequence_batch_scheduler.cc:825] Starting sequence-batch reaper thread at nice 10...
+I0111 11:11:35.184146 1624646 sequence_batch_scheduler.cc:1282] Starting Direct sequence-batch scheduler thread 0 at nice 0...
+I0111 11:11:35.399244 1624646 backend_model_instance.cc:782] Starting backend thread for preprocessor at nice 0 on device 0...
+I0111 11:11:35.399639 1624646 model_lifecycle.cc:694] successfully loaded 'preprocessor' version 1
+I0111 11:11:37.059084 1624646 python_be.cc:1713] model configuration:
+{
+    "name": "aframe",
+    "platform": "",
+    "backend": "python",
+    "version_policy": {
+        "latest": {
+            "num_versions": 1
+        }
+    },
+    "max_batch_size": 0,
+    "input": [
+        {
+            "name": "X",
+            "data_type": "TYPE_FP32",
+            "format": "FORMAT_NONE",
+            "dims": [
+                128,
+                2,
+                16384
+            ],
+            "is_shape_tensor": false,
+            "allow_ragged_batch": false,
+            "optional": false
+        }
+    ],
+    "output": [
+        {
+            "name": "discriminator",
+            "data_type": "TYPE_FP32",
+            "dims": [
+                128,
+                1
+            ],
+            "label_filename": "",
+            "is_shape_tensor": false
+        }
+    ],
+    "batch_input": [],
+    "batch_output": [],
+    "optimization": {
+        "graph": {
+            "level": -1
+        },
+        "priority": "PRIORITY_DEFAULT",
+        "input_pinned_memory": {
+            "enable": true
+        },
+        "output_pinned_memory": {
+            "enable": true
+        },
+        "gather_kernel_buffer_threshold": 0,
+        "eager_batching": false
+    },
+    "instance_group": [
+        {
+            "name": "aframe_0",
+            "kind": "KIND_GPU",
+            "count": 1,
+            "gpus": [
+                0
+            ],
+            "secondary_devices": [],
+            "profile": [],
+            "passive": false,
+            "host_policy": ""
+        }
+    ],
+    "default_model_filename": "model.py",
+    "cc_model_filenames": {},
+    "metric_tags": {},
+    "parameters": {},
+    "model_warmup": []
+}
+I0111 11:11:37.059248 1624646 python_be.cc:1977] TRITONBACKEND_ModelInstanceInitialize: aframe_0 (GPU device 0)
+I0111 11:11:37.059979 1624646 backend_model_instance.cc:105] Creating instance aframe_0 on GPU 0 (8.0) using artifact 'model.py'
+I0111 11:11:37.080837 1624646 stub_launcher.cc:257] Starting Python backend stub:  exec /opt/tritonserver/backends/python/triton_python_backend_stub runs/model_repository/aframe/1/model.py triton_python_backend_shm_region_2 67108864 67108864 1624646 /opt/tritonserver/backends/python 336 aframe_0
+I0111 11:11:37.639759 1624646 python_be.cc:1998] TRITONBACKEND_ModelInstanceInitialize: instance initialization successful aframe_0 (device 0)
+I0111 11:11:37.639982 1624646 backend_model_instance.cc:782] Starting backend thread for aframe_0 at nice 0 on device 0...
+I0111 11:11:37.640224 1624646 model_lifecycle.cc:694] successfully loaded 'aframe' version 1
+I0111 11:11:37.640659 1624646 model_lifecycle.cc:459] loading: aframe-stream:1
+I0111 11:11:37.640864 1624646 ensemble_model.cc:54] ensemble model for aframe-stream
+
+I0111 11:11:37.640889 1624646 model_lifecycle.cc:694] successfully loaded 'aframe-stream' version 1
+I0111 11:11:37.640938 1624646 server.cc:583] 
++------------------+------+
+| Repository Agent | Path |
++------------------+------+
++------------------+------+
+
+I0111 11:11:37.640986 1624646 server.cc:610] 
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Backend     | Path                                                            | Config                                                                                                                                                        |
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| onnxruntime | /opt/tritonserver/backends/onnxruntime/libtriton_onnxruntime.so | {"cmdline":{"auto-complete-config":"true","backend-directory":"/opt/tritonserver/backends","min-compute-capability":"6.000000","default-max-batch-size":"4"}} |
+| pytorch     | /opt/tritonserver/backends/pytorch/libtriton_pytorch.so         | {"cmdline":{"auto-complete-config":"true","backend-directory":"/opt/tritonserver/backends","min-compute-capability":"6.000000","default-max-batch-size":"4"}} |
+| python      | /opt/tritonserver/backends/python/libtriton_python.so           | {"cmdline":{"auto-complete-config":"true","backend-directory":"/opt/tritonserver/backends","min-compute-capability":"6.000000","default-max-batch-size":"4"}} |
++-------------+-----------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+I0111 11:11:37.641021 1624646 server.cc:653] 
++---------------+---------+--------+
+| Model         | Version | Status |
++---------------+---------+--------+
+| aframe        | 1       | READY  |
+| aframe-stream | 1       | READY  |
+| preprocessor  | 1       | READY  |
+| snapshotter   | 1       | READY  |
++---------------+---------+--------+
+
+I0111 11:11:37.691748 1624646 metrics.cc:808] Collecting metrics for GPU 0: NVIDIA A100-SXM4-80GB
+I0111 11:11:37.692812 1624646 metrics.cc:701] Collecting CPU metrics
+I0111 11:11:37.693094 1624646 tritonserver.cc:2387] 
++----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Option                           | Value                                                                                                                                                                                                           |
++----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| server_id                        | triton                                                                                                                                                                                                          |
+| server_version                   | 2.33.0                                                                                                                                                                                                          |
+| server_extensions                | classification sequence model_repository model_repository(unload_dependents) schedule_policy model_configuration system_shared_memory cuda_shared_memory binary_tensor_data parameters statistics trace logging |
+| model_repository_path[0]         | runs/model_repository                                                                                                                                                                                           |
+| model_control_mode               | MODE_NONE                                                                                                                                                                                                       |
+| strict_model_config              | 0                                                                                                                                                                                                               |
+| rate_limit                       | OFF                                                                                                                                                                                                             |
+| pinned_memory_pool_byte_size     | 268435456                                                                                                                                                                                                       |
+| cuda_memory_pool_byte_size{0}    | 67108864                                                                                                                                                                                                        |
+| min_supported_compute_capability | 6.0                                                                                                                                                                                                             |
+| strict_readiness                 | 1                                                                                                                                                                                                               |
+| exit_timeout                     | 30                                                                                                                                                                                                              |
+| cache_enabled                    | 0                                                                                                                                                                                                               |
++----------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+I0111 11:11:37.695301 1624646 grpc_server.cc:2344] 
++----------------------------------------------+---------+
+| GRPC KeepAlive Option                        | Value   |
++----------------------------------------------+---------+
+| keepalive_time_ms                            | 7200000 |
+| keepalive_timeout_ms                         | 20000   |
+| keepalive_permit_without_calls               | 0       |
+| http2_max_pings_without_data                 | 2       |
+| http2_min_recv_ping_interval_without_data_ms | 300000  |
+| http2_max_ping_strikes                       | 2       |
++----------------------------------------------+---------+
+
+I0111 11:11:37.696833 1624646 grpc_server.cc:128] Ready for RPC 'Check', 0
+I0111 11:11:37.696852 1624646 grpc_server.cc:128] Ready for RPC 'ServerLive', 0
+I0111 11:11:37.696859 1624646 grpc_server.cc:128] Ready for RPC 'ServerReady', 0
+I0111 11:11:37.696863 1624646 grpc_server.cc:128] Ready for RPC 'ModelReady', 0
+I0111 11:11:37.696869 1624646 grpc_server.cc:128] Ready for RPC 'ServerMetadata', 0
+I0111 11:11:37.696876 1624646 grpc_server.cc:128] Ready for RPC 'ModelMetadata', 0
+I0111 11:11:37.696885 1624646 grpc_server.cc:128] Ready for RPC 'ModelConfig', 0
+I0111 11:11:37.696897 1624646 grpc_server.cc:128] Ready for RPC 'SystemSharedMemoryStatus', 0
+I0111 11:11:37.696904 1624646 grpc_server.cc:128] Ready for RPC 'SystemSharedMemoryRegister', 0
+I0111 11:11:37.696910 1624646 grpc_server.cc:128] Ready for RPC 'SystemSharedMemoryUnregister', 0
+I0111 11:11:37.696916 1624646 grpc_server.cc:128] Ready for RPC 'CudaSharedMemoryStatus', 0
+I0111 11:11:37.696921 1624646 grpc_server.cc:128] Ready for RPC 'CudaSharedMemoryRegister', 0
+I0111 11:11:37.696927 1624646 grpc_server.cc:128] Ready for RPC 'CudaSharedMemoryUnregister', 0
+I0111 11:11:37.696933 1624646 grpc_server.cc:128] Ready for RPC 'RepositoryIndex', 0
+I0111 11:11:37.696939 1624646 grpc_server.cc:128] Ready for RPC 'RepositoryModelLoad', 0
+I0111 11:11:37.696944 1624646 grpc_server.cc:128] Ready for RPC 'RepositoryModelUnload', 0
+I0111 11:11:37.696951 1624646 grpc_server.cc:128] Ready for RPC 'ModelStatistics', 0
+I0111 11:11:37.696957 1624646 grpc_server.cc:128] Ready for RPC 'Trace', 0
+I0111 11:11:37.696963 1624646 grpc_server.cc:128] Ready for RPC 'Logging', 0
+I0111 11:11:37.696986 1624646 grpc_server.cc:377] Thread started for CommonHandler
+I0111 11:11:37.697117 1624646 infer_handler.cc:629] New request handler for ModelInferHandler, 0
+I0111 11:11:37.697145 1624646 infer_handler.h:1025] Thread started for ModelInferHandler
+I0111 11:11:37.697234 1624646 infer_handler.cc:629] New request handler for ModelInferHandler, 0
+I0111 11:11:37.697251 1624646 infer_handler.h:1025] Thread started for ModelInferHandler
+I0111 11:11:37.697321 1624646 stream_infer_handler.cc:122] New request handler for ModelStreamInferHandler, 0
+I0111 11:11:37.697338 1624646 infer_handler.h:1025] Thread started for ModelStreamInferHandler
+I0111 11:11:37.697343 1624646 grpc_server.cc:2450] Started GRPCInferenceService at 0.0.0.0:8001
+I0111 11:11:37.697527 1624646 http_server.cc:3555] Started HTTPService at 0.0.0.0:8000
+I0111 11:11:37.739043 1624646 http_server.cc:185] Started Metrics Service at 0.0.0.0:8002
+I0111 11:11:53.223582 1624646 grpc_server.cc:176] Process for ServerLive, rpc_ok=1, 0 step START
+I0111 11:11:53.223634 1624646 grpc_server.cc:128] Ready for RPC 'ServerLive', 1
+I0111 11:11:53.223688 1624646 grpc_server.cc:176] Process for ServerLive, rpc_ok=1, 0 step COMPLETE
+I0111 11:11:53.223703 1624646 grpc_server.cc:369] Done for ServerLive, 0
+I0111 11:11:53.224374 1624646 grpc_server.cc:176] Process for ModelConfig, rpc_ok=1, 0 step START
+I0111 11:11:53.224404 1624646 grpc_server.cc:128] Ready for RPC 'ModelConfig', 1
+I0111 11:11:53.227168 1624646 grpc_server.cc:176] Process for ModelConfig, rpc_ok=1, 0 step COMPLETE
+I0111 11:11:53.227190 1624646 grpc_server.cc:369] Done for ModelConfig, 0
+I0111 11:11:53.228274 1624646 grpc_server.cc:176] Process for ModelMetadata, rpc_ok=1, 0 step START
+I0111 11:11:53.228322 1624646 grpc_server.cc:128] Ready for RPC 'ModelMetadata', 1
+I0111 11:11:53.228435 1624646 grpc_server.cc:176] Process for ModelMetadata, rpc_ok=1, 0 step COMPLETE
+I0111 11:11:53.228448 1624646 grpc_server.cc:369] Done for ModelMetadata, 0
+I0111 11:11:53.229054 1624646 grpc_server.cc:176] Process for ModelConfig, rpc_ok=1, 1 step START
+I0111 11:11:53.229081 1624646 grpc_server.cc:128] Ready for RPC 'ModelConfig', 2
+I0111 11:11:53.230212 1624646 grpc_server.cc:176] Process for ModelConfig, rpc_ok=1, 1 step COMPLETE
+I0111 11:11:53.230233 1624646 grpc_server.cc:369] Done for ModelConfig, 1
+I0111 11:11:53.231382 1624646 grpc_server.cc:176] Process for ModelReady, rpc_ok=1, 0 step START
+I0111 11:11:53.231437 1624646 grpc_server.cc:128] Ready for RPC 'ModelReady', 1
+I0111 11:11:53.231493 1624646 grpc_server.cc:176] Process for ModelReady, rpc_ok=1, 0 step COMPLETE
+I0111 11:11:53.231505 1624646 grpc_server.cc:369] Done for ModelReady, 0
+I0111 11:11:53.231744 1624646 grpc_server.cc:176] Process for ModelReady, rpc_ok=1, 1 step START
+I0111 11:11:53.231767 1624646 grpc_server.cc:128] Ready for RPC 'ModelReady', 2
+I0111 11:11:53.231803 1624646 grpc_server.cc:176] Process for ModelReady, rpc_ok=1, 1 step COMPLETE
+I0111 11:11:53.231813 1624646 grpc_server.cc:369] Done for ModelReady, 1
+I0111 11:11:53.233235 1624646 stream_infer_handler.cc:129] Process for ModelStreamInferHandler, rpc_ok=1, context 0, 0 step 0
+I0111 11:11:53.233281 1624646 stream_infer_handler.cc:122] New request handler for ModelStreamInferHandler, 0
+I0111 11:12:07.551468 1624646 stream_infer_handler.cc:129] Process for ModelStreamInferHandler, rpc_ok=1, context 0, 0 step 4
+I0111 11:12:07.553053 1624646 infer_request.cc:751] [request id: 0_1467483626] prepared: [0x0x1486cc003b30] request id: 0_1467483626, model: aframe-stream, requested version: 1, actual version: 1, flags: 0x1, correlation id: 1467483626, batch size: 0, priority: 0, timeout (us): 10000000
+original inputs:
+[0x0x1486cc004068] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+override inputs:
+inputs:
+[0x0x1486cc004068] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+original requested outputs:
+requested outputs:
+discriminator
+
+I0111 11:12:07.553143 1624646 infer_request.cc:751] [request id: 0_1467483626] prepared: [0x0x1486cc0055f0] request id: 0_1467483626, model: snapshotter, requested version: -1, actual version: 1, flags: 0x1, correlation id: 1467483626, batch size: 0, priority: 0, timeout (us): 10000000
+original inputs:
+[0x0x1486cc005b48] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+override inputs:
+inputs:
+[0x0x1486cc005b48] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+original requested outputs:
+strain
+requested outputs:
+strain
+
+I0111 11:12:07.553175 1624646 sequence_batch_scheduler.cc:725] Enqueuing CORRID 1467483626 into batcher 0, sequence slot 0: snapshotter
+I0111 11:12:07.553266 1624646 pinned_memory_manager.cc:161] pinned memory allocation: size 1341440, addr 0x148c8e1478a0
+I0111 11:12:07.553479 1624646 pinned_memory_manager.cc:161] pinned memory allocation: size 1341440, addr 0x148c8e28f0b0
+I0111 11:12:07.553639 1624646 pinned_memory_manager.cc:190] pinned memory deallocation: addr 0x148c8e1478a0
+I0111 11:12:07.553748 1624646 infer_request.cc:653] [request id: 0_1467483626] adding input override for input_snapshot: [0x0x1486cc0055f0] request id: 0_1467483626, model: snapshotter, requested version: -1, actual version: 1, flags: 0x1, correlation id: 1467483626, batch size: 0, priority: 0, timeout (us): 10000000
+original inputs:
+[0x0x1486cc005b48] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+override inputs:
+inputs:
+[0x0x1486cc005b48] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+original requested outputs:
+strain
+requested outputs:
+strain
+
+I0111 11:12:07.553795 1624646 infer_request.cc:668] [request id: 0_1467483626] added input override for input_snapshot: [0x0x1486cc0055f0] request id: 0_1467483626, model: snapshotter, requested version: -1, actual version: 1, flags: 0x1, correlation id: 1467483626, batch size: 0, priority: 0, timeout (us): 10000000
+original inputs:
+[0x0x1486cc005b48] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+override inputs:
+[0x0x1489e8002ee0] input: input_snapshot, type: FP32, original shape: [2,2,83840], batch + shape: [2,2,83840], shape: []
+inputs:
+[0x0x1489e8002ee0] input: input_snapshot, type: FP32, original shape: [2,2,83840], batch + shape: [2,2,83840], shape: []
+[0x0x1486cc005b48] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+original requested outputs:
+strain
+requested outputs:
+strain
+
+I0111 11:12:07.553843 1624646 onnxruntime.cc:2717] model snapshotter, instance snapshotter_0, executing 1 requests
+I0111 11:12:07.553855 1624646 onnxruntime.cc:1514] TRITONBACKEND_ModelExecute: Running snapshotter_0 with 1 requests
+2026-01-11 12:12:07.554001509 [I:onnxruntime:log, bfc_arena.cc:339 AllocateRawInternal] Extending BFCArena for Cuda. bin_num:12 (requested) num_bytes: 1341440 (actual) rounded_bytes:1341440
+2026-01-11 12:12:07.554684334 [I:onnxruntime:log, bfc_arena.cc:198 Extend] Extended allocation by 2097152 bytes.
+2026-01-11 12:12:07.554700634 [I:onnxruntime:log, bfc_arena.cc:201 Extend] Total allocated bytes: 2097152
+2026-01-11 12:12:07.554710734 [I:onnxruntime:log, bfc_arena.cc:204 Extend] Allocated memory at 0x148c9ea00000 to 0x148c9ec00000
+2026-01-11 12:12:07.554826873 [I:onnxruntime:log, bfc_arena.cc:339 AllocateRawInternal] Extending BFCArena for Cuda. bin_num:10 (requested) num_bytes: 262144 (actual) rounded_bytes:262144
+2026-01-11 12:12:07.555084891 [I:onnxruntime:log, bfc_arena.cc:198 Extend] Extended allocation by 2097152 bytes.
+2026-01-11 12:12:07.555099341 [I:onnxruntime:log, bfc_arena.cc:201 Extend] Total allocated bytes: 4194304
+2026-01-11 12:12:07.555109011 [I:onnxruntime:log, bfc_arena.cc:204 Extend] Allocated memory at 0x148c9ec00000 to 0x148c9ee00000
+2026-01-11 12:12:07.555247810 [I:onnxruntime:, sequential_executor.cc:514 ExecuteThePlan] Number of streams: 1
+2026-01-11 12:12:07.555294849 [I:onnxruntime:, sequential_executor.cc:181 SessionScope] Begin execution
+2026-01-11 12:12:07.555336399 [I:onnxruntime:log, bfc_arena.cc:339 AllocateRawInternal] Extending BFCArena for CudaPinned. bin_num:0 (requested) num_bytes: 16 (actual) rounded_bytes:256
+2026-01-11 12:12:07.555404269 [I:onnxruntime:log, bfc_arena.cc:198 Extend] Extended allocation by 1048576 bytes.
+2026-01-11 12:12:07.555415799 [I:onnxruntime:log, bfc_arena.cc:201 Extend] Total allocated bytes: 1048576
+2026-01-11 12:12:07.555426988 [I:onnxruntime:log, bfc_arena.cc:204 Extend] Allocated memory at 0x148c9e000200 to 0x148c9e100200
+2026-01-11 12:12:07.556608840 [I:onnxruntime:log, bfc_arena.cc:339 AllocateRawInternal] Extending BFCArena for CudaPinned. bin_num:0 (requested) num_bytes: 16 (actual) rounded_bytes:256
+2026-01-11 12:12:07.558529046 [I:onnxruntime:log, bfc_arena.cc:198 Extend] Extended allocation by 2097152 bytes.
+2026-01-11 12:12:07.558545575 [I:onnxruntime:log, bfc_arena.cc:201 Extend] Total allocated bytes: 3145728
+2026-01-11 12:12:07.558555515 [I:onnxruntime:log, bfc_arena.cc:204 Extend] Allocated memory at 0x148c9ee00000 to 0x148c9f000000
+2026-01-11 12:12:07.558626745 [I:onnxruntime:log, bfc_arena.cc:339 AllocateRawInternal] Extending BFCArena for Cuda. bin_num:0 (requested) num_bytes: 16 (actual) rounded_bytes:256
+2026-01-11 12:12:07.558900273 [I:onnxruntime:log, bfc_arena.cc:198 Extend] Extended allocation by 4194304 bytes.
+2026-01-11 12:12:07.558915223 [I:onnxruntime:log, bfc_arena.cc:201 Extend] Total allocated bytes: 8388608
+2026-01-11 12:12:07.558924713 [I:onnxruntime:log, bfc_arena.cc:204 Extend] Allocated memory at 0x148c9f000000 to 0x148c9f400000
+2026-01-11 12:12:07.575296081 [I:onnxruntime:, sequential_executor.cc:498 ExecuteKernel] stream 0 launch kernel with idx 0
+2026-01-11 12:12:07.632569376 [I:onnxruntime:, sequential_executor.cc:498 ExecuteKernel] stream 0 launch kernel with idx 1
+I0111 11:12:07.633060 1624646 infer_response.cc:167] add response output: output: strain, type: FP32, shape: [2,2,100224]
+I0111 11:12:07.633091 1624646 ensemble_scheduler.cc:540] Internal response allocation: strain, size 1603584, addr 0x148c8a147800, memory type 2, type id 0
+I0111 11:12:07.633143 1624646 ensemble_scheduler.cc:555] Internal response release: size 1603584, addr 0x148c8a147800
+I0111 11:12:07.633176 1624646 infer_request.cc:751] [request id: 0_1467483626] prepared: [0x0x1489e82b9ac0] request id: 0_1467483626, model: preprocessor, requested version: -1, actual version: 1, flags: 0x1, correlation id: 1467483626, batch size: 0, priority: 0, timeout (us): 10000000
+original inputs:
+[0x0x1489e82b9df8] input: strain, type: FP32, original shape: [2,2,100224], batch + shape: [2,2,100224], shape: [2,2,100224]
+override inputs:
+inputs:
+[0x0x1489e82b9df8] input: strain, type: FP32, original shape: [2,2,100224], batch + shape: [2,2,100224], shape: [2,2,100224]
+original requested outputs:
+X
+requested outputs:
+X
+
+I0111 11:12:07.633259 1624646 libtorch.cc:2167] model preprocessor, instance preprocessor, executing 1 requests
+I0111 11:12:07.633270 1624646 libtorch.cc:997] TRITONBACKEND_ModelExecute: Running preprocessor with 1 requests
+I0111 11:12:09.167816 1624646 infer_response.cc:167] add response output: output: X, type: FP32, shape: [128,2,16384]
+I0111 11:12:09.167875 1624646 ensemble_scheduler.cc:540] Internal response allocation: X, size 16777216, addr 0x148c8a2cf000, memory type 2, type id 0
+I0111 11:12:09.168088 1624646 ensemble_scheduler.cc:555] Internal response release: size 16777216, addr 0x148c8a2cf000
+I0111 11:12:09.168125 1624646 infer_request.cc:751] [request id: 0_1467483626] prepared: [0x0x148689ec8740] request id: 0_1467483626, model: aframe, requested version: -1, actual version: 1, flags: 0x1, correlation id: 1467483626, batch size: 0, priority: 0, timeout (us): 10000000
+original inputs:
+[0x0x14877c3d1028] input: X, type: FP32, original shape: [128,2,16384], batch + shape: [128,2,16384], shape: [128,2,16384]
+override inputs:
+inputs:
+[0x0x14877c3d1028] input: X, type: FP32, original shape: [128,2,16384], batch + shape: [128,2,16384], shape: [128,2,16384]
+original requested outputs:
+discriminator
+requested outputs:
+discriminator
+
+I0111 11:12:09.168333 1624646 python_be.cc:1106] model aframe, instance aframe_0, executing 1 requests
+Test123 ()
+E0111 11:12:11.760207 1624646 model.py:125] Test123: ()
+[<c_python_backend_utils.InferenceResponse object at 0x14cc2ec917b0>]
+I0111 11:12:11.894752 1624646 infer_response.cc:167] add response output: output: discriminator, type: FP32, shape: [128,1]
+I0111 11:12:11.894788 1624646 pinned_memory_manager.cc:161] pinned memory allocation: size 512, addr 0x148c8e1478a0
+I0111 11:12:11.894794 1624646 ensemble_scheduler.cc:540] Internal response allocation: discriminator, size 512, addr 0x148c8e1478a0, memory type 1, type id 0
+I0111 11:12:11.894807 1624646 ensemble_scheduler.cc:555] Internal response release: size 512, addr 0x148c8e1478a0
+I0111 11:12:11.894824 1624646 infer_response.cc:141] add response output: output: discriminator, type: FP32, shape: [128,1]
+I0111 11:12:11.894837 1624646 infer_handler.cc:751] GRPC: unable to provide 'discriminator' in CPU_PINNED, will use CPU
+I0111 11:12:11.894844 1624646 infer_handler.cc:762] GRPC: using buffer for 'discriminator', size: 512, addr: 0x1486f0000bf0
+I0111 11:12:11.894852 1624646 pinned_memory_manager.cc:190] pinned memory deallocation: addr 0x148c8e1478a0
+I0111 11:12:11.894857 1624646 stream_infer_handler.cc:516] ModelStreamInferHandler::StreamInferComplete, context 0, 0 step 3, callback index 1, flags 1
+I0111 11:12:11.894882 1624646 infer_handler.cc:153] GRPC free: size 512, addr 0x1486f0000bf0
+I0111 11:12:11.894980 1624646 stream_infer_handler.cc:129] Process for ModelStreamInferHandler, rpc_ok=1, context 0, 0 step 6
+I0111 11:12:11.894997 1624646 infer_handler.cc:602] ModelInferHandler::InferRequestComplete
+I0111 11:12:11.895001 1624646 infer_handler.h:1018] Done for ModelStreamInferHandler, 0
+I0111 11:12:11.895008 1624646 python_be.cc:2099] TRITONBACKEND_ModelInstanceExecute: model instance name aframe_0 released 1 requests
+I0111 11:20:54.541523 1624646 stream_infer_handler.cc:129] Process for ModelStreamInferHandler, rpc_ok=1, context 0, 0 step 4
+I0111 11:20:54.541609 1624646 infer_request.cc:751] [request id: 0_1467483627] prepared: [0x0x1486cc0066b0] request id: 0_1467483627, model: aframe-stream, requested version: 1, actual version: 1, flags: 0x1, correlation id: 1467483627, batch size: 0, priority: 0, timeout (us): 10000000
+original inputs:
+[0x0x1486cc006be8] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+override inputs:
+inputs:
+[0x0x1486cc006be8] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+original requested outputs:
+requested outputs:
+discriminator
+
+I0111 11:20:54.541678 1624646 infer_request.cc:751] [request id: 0_1467483627] prepared: [0x0x1486cc007ac0] request id: 0_1467483627, model: snapshotter, requested version: -1, actual version: 1, flags: 0x1, correlation id: 1467483627, batch size: 0, priority: 0, timeout (us): 10000000
+original inputs:
+[0x0x1486cc008018] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+override inputs:
+inputs:
+[0x0x1486cc008018] input: stream, type: FP32, original shape: [2,2,16384], batch + shape: [2,2,16384], shape: [2,2,16384]
+original requested outputs:
+strain
+requested outputs:
+strain
+
+I0111 11:20:54.541713 1624646 sequence_batch_scheduler.cc:684] Enqueuing CORRID 1467483627 into new backlog: snapshotter
+I0111 11:21:04.541920 1624646 stream_infer_handler.cc:516] ModelStreamInferHandler::StreamInferComplete, context 0, 0 step 3, callback index 1, flags 1
+I0111 11:21:04.541978 1624646 stream_infer_handler.cc:568] Failed for ID: 0_1467483627
+
+I0111 11:21:04.542101 1624646 infer_handler.cc:602] ModelInferHandler::InferRequestComplete
+I0111 11:21:04.542143 1624646 stream_infer_handler.cc:129] Process for ModelStreamInferHandler, rpc_ok=1, context 0, 0 step 6
+I0111 11:21:04.542160 1624646 infer_handler.h:1018] Done for ModelStreamInferHandler, 0
+I0111 11:21:15.181709 1624646 stream_infer_handler.cc:129] Process for ModelStreamInferHandler, rpc_ok=0, context 0, 0 step 4
+I0111 11:21:15.181810 1624646 stream_infer_handler.cc:129] Process for ModelStreamInferHandler, rpc_ok=1, context 0, 0 step 1
+I0111 11:21:15.181824 1624646 infer_handler.h:1018] Done for ModelStreamInferHandler, 0
+^CSignal (2) received.
+I0111 11:22:04.353967 1624646 server.cc:284] Waiting for in-flight requests to complete.
+I0111 11:22:04.354010 1624646 server.cc:300] Timeout 30: Found 1 model versions that have in-flight inferences
+I0111 11:22:04.354021 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+^CSignal (2) received.
+I0111 11:22:05.354246 1624646 server.cc:300] Timeout 29: Found 1 model versions that have in-flight inferences
+I0111 11:22:05.354292 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+^CSignal (2) received.
+^CSignal (2) received.
+^CSignal (2) received.
+I0111 11:22:06.354672 1624646 server.cc:300] Timeout 28: Found 1 model versions that have in-flight inferences
+I0111 11:22:06.354721 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+^CSignal (2) received.
+^CSignal (2) received.
+I0111 11:22:07.355053 1624646 server.cc:300] Timeout 27: Found 1 model versions that have in-flight inferences
+I0111 11:22:07.355093 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+^CSignal (2) received.
+I0111 11:22:08.355317 1624646 server.cc:300] Timeout 26: Found 1 model versions that have in-flight inferences
+I0111 11:22:08.355358 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:09.355497 1624646 server.cc:300] Timeout 25: Found 1 model versions that have in-flight inferences
+I0111 11:22:09.355544 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:10.355672 1624646 server.cc:300] Timeout 24: Found 1 model versions that have in-flight inferences
+I0111 11:22:10.355722 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:11.355871 1624646 server.cc:300] Timeout 23: Found 1 model versions that have in-flight inferences
+I0111 11:22:11.355922 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:12.356060 1624646 server.cc:300] Timeout 22: Found 1 model versions that have in-flight inferences
+I0111 11:22:12.356118 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:13.356249 1624646 server.cc:300] Timeout 21: Found 1 model versions that have in-flight inferences
+I0111 11:22:13.356300 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:14.356437 1624646 server.cc:300] Timeout 20: Found 1 model versions that have in-flight inferences
+I0111 11:22:14.356487 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:15.356631 1624646 server.cc:300] Timeout 19: Found 1 model versions that have in-flight inferences
+I0111 11:22:15.356682 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:16.356836 1624646 server.cc:300] Timeout 18: Found 1 model versions that have in-flight inferences
+I0111 11:22:16.356887 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:17.357020 1624646 server.cc:300] Timeout 17: Found 1 model versions that have in-flight inferences
+I0111 11:22:17.357070 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:18.357219 1624646 server.cc:300] Timeout 16: Found 1 model versions that have in-flight inferences
+I0111 11:22:18.357268 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:19.357395 1624646 server.cc:300] Timeout 15: Found 1 model versions that have in-flight inferences
+I0111 11:22:19.357443 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:20.357589 1624646 server.cc:300] Timeout 14: Found 1 model versions that have in-flight inferences
+I0111 11:22:20.357639 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:21.357768 1624646 server.cc:300] Timeout 13: Found 1 model versions that have in-flight inferences
+I0111 11:22:21.357818 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:22.357947 1624646 server.cc:300] Timeout 12: Found 1 model versions that have in-flight inferences
+I0111 11:22:22.357997 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:23.358125 1624646 server.cc:300] Timeout 11: Found 1 model versions that have in-flight inferences
+I0111 11:22:23.358173 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:24.358313 1624646 server.cc:300] Timeout 10: Found 1 model versions that have in-flight inferences
+I0111 11:22:24.358360 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:25.358502 1624646 server.cc:300] Timeout 9: Found 1 model versions that have in-flight inferences
+I0111 11:22:25.358550 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:26.358701 1624646 server.cc:300] Timeout 8: Found 1 model versions that have in-flight inferences
+I0111 11:22:26.358749 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:27.358893 1624646 server.cc:300] Timeout 7: Found 1 model versions that have in-flight inferences
+I0111 11:22:27.358937 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:28.359079 1624646 server.cc:300] Timeout 6: Found 1 model versions that have in-flight inferences
+I0111 11:22:28.359128 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:29.359274 1624646 server.cc:300] Timeout 5: Found 1 model versions that have in-flight inferences
+I0111 11:22:29.359322 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:30.359473 1624646 server.cc:300] Timeout 4: Found 1 model versions that have in-flight inferences
+I0111 11:22:30.359520 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:31.359649 1624646 server.cc:300] Timeout 3: Found 1 model versions that have in-flight inferences
+I0111 11:22:31.359695 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:32.359841 1624646 server.cc:300] Timeout 2: Found 1 model versions that have in-flight inferences
+I0111 11:22:32.359892 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:33.360046 1624646 server.cc:300] Timeout 1: Found 1 model versions that have in-flight inferences
+I0111 11:22:33.360107 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+I0111 11:22:34.360222 1624646 server.cc:300] Timeout 0: Found 1 model versions that have in-flight inferences
+I0111 11:22:34.360274 1624646 server.cc:304] Model 'snapshotter' (version 1) has 1 in-flight inferences
+E0111 11:22:34.360291 1624646 main.cc:517] failed to stop server: Internal - Exit timeout expired. Exiting immediately.
+�0111 11:22:35.776811 1624646 grpc_server.cc:176] Process for ServerLive, rpc_ok=0, 1 step START
+�0111 11:22:35.776846 1624646 grpc_server.cc:369] Done for ServerLive, 1
+�0111 11:22:35.776860 1624646 grpc_server.cc:176] Process for ServerReady, rpc_ok=0, 0 step START
+�0111 11:22:35.776867 1624646 grpc_server.cc:369] Done for ServerReady, 0
+�0111 11:22:35.776870 1624646 infer_handler.cc:636] Process for ModelInferHandler, rpc_ok=0, 0 step 0
+�0111 11:22:35.776897 1624646 infer_handler.h:1018] Done for ModelInferHandler, 0
+�0111 11:22:35.776876 1624646 grpc_server.cc:176] Process for ModelReady, rpc_ok=0, 2 step START
+�0111 11:22:35.776937 1624646 grpc_server.cc:369] Done for ModelReady, 2
+�0111 11:22:35.776947 1624646 grpc_server.cc:176] Process for ServerMetadata, rpc_ok=0, 0 step START
+�0111 11:22:35.776955 1624646 grpc_server.cc:369] Done for ServerMetadata, 0
+�0111 11:22:35.776970 1624646 grpc_server.cc:176] Process for ModelMetadata, rpc_ok=0, 1 step START
+�0111 11:22:35.776979 1624646 grpc_server.cc:369] Done for ModelMetadata, 1
+�0111 11:22:35.777053 1624646 infer_handler.cc:636] Process for ModelInferHandler, rpc_ok=0, 0 step 0
+�0111 11:22:35.777064 1624646 infer_handler.h:1018] Done for ModelInferHandler, 0
+�0111 11:22:35.777097 1624646 stream_infer_handler.cc:129] Process for ModelStreamInferHandler, rpc_ok=0, context 0, 0 step 0
+�0111 11:22:35.777107 1624646 infer_handler.h:1018] Done for ModelStreamInferHandler, 0
+�0111 11:22:35.777137 1624646 grpc_server.cc:176] Process for ModelConfig, rpc_ok=0, 2 step START
+�0111 11:22:35.777144 1624646 grpc_server.cc:369] Done for ModelConfig, 2
+�0111 11:22:35.777173 1624646 grpc_server.cc:176] Process for ModelStatistics, rpc_ok=0, 0 step START
+�0111 11:22:35.777183 1624646 grpc_server.cc:369] Done for ModelStatistics, 0
+�0111 11:22:35.777269 1624646 grpc_server.cc:176] Process for RepositoryIndex, rpc_ok=0, 0 step START
+�0111 11:22:35.777282 1624646 grpc_server.cc:369] Done for RepositoryIndex, 0
+�0111 11:22:35.777293 1624646 grpc_server.cc:176] Process for RepositoryModelLoad, rpc_ok=0, 0 step START
+�0111 11:22:35.777299 1624646 grpc_server.cc:369] Done for RepositoryModelLoad, 0
+�0111 11:22:35.777318 1624646 grpc_server.cc:176] Process for RepositoryModelUnload, rpc_ok=0, 0 step START
+�0111 11:22:35.777325 1624646 grpc_server.cc:369] Done for RepositoryModelUnload, 0
+�0111 11:22:35.777334 1624646 grpc_server.cc:176] Process for SystemSharedMemoryStatus, rpc_ok=0, 0 step START
+�0111 11:22:35.777343 1624646 grpc_server.cc:369] Done for SystemSharedMemoryStatus, 0
+�0111 11:22:35.777352 1624646 grpc_server.cc:176] Process for SystemSharedMemoryRegister, rpc_ok=0, 0 step START
+�0111 11:22:35.777360 1624646 grpc_server.cc:369] Done for SystemSharedMemoryRegister, 0
+�0111 11:22:35.777369 1624646 grpc_server.cc:176] Process for SystemSharedMemoryUnregister, rpc_ok=0, 0 step START
+�0111 11:22:35.777376 1624646 grpc_server.cc:369] Done for SystemSharedMemoryUnregister, 0
+�0111 11:22:35.777384 1624646 grpc_server.cc:176] Process for CudaSharedMemoryStatus, rpc_ok=0, 0 step START
+�0111 11:22:35.777393 1624646 grpc_server.cc:369] Done for CudaSharedMemoryStatus, 0
+�0111 11:22:35.777404 1624646 grpc_server.cc:176] Process for CudaSharedMemoryRegister, rpc_ok=0, 0 step START
+�0111 11:22:35.777412 1624646 grpc_server.cc:369] Done for CudaSharedMemoryRegister, 0
+�0111 11:22:35.777423 1624646 grpc_server.cc:176] Process for CudaSharedMemoryUnregister, rpc_ok=0, 0 step START
+�0111 11:22:35.777432 1624646 grpc_server.cc:369] Done for CudaSharedMemoryUnregister, 0
+�0111 11:22:35.777442 1624646 grpc_server.cc:176] Process for Trace, rpc_ok=0, 0 step START
+�0111 11:22:35.777450 1624646 grpc_server.cc:369] Done for Trace, 0
+�0111 11:22:35.777462 1624646 grpc_server.cc:176] Process for Logging, rpc_ok=0, 0 step START
+�0111 11:22:35.777470 1624646 grpc_server.cc:369] Done for Logging, 0
+�0111 11:22:35.777482 1624646 grpc_server.cc:176] Process for Check, rpc_ok=0, 0 step START
+�0111 11:22:35.777491 1624646 grpc_server.cc:369] Done for Check, 0
+�0111 11:22:35.780694 1624646 grpc_server.cc:387] Thread exited for CommonHandler
+�0111 11:22:35.780709 1624646 infer_handler.h:1039] Thread exited for ModelInferHandler
+�0111 11:22:35.780716 1624646 infer_handler.h:1039] Thread exited for ModelInferHandler
+�0111 11:22:35.780722 1624646 infer_handler.h:1039] Thread exited for ModelStreamInferHandler
+�0111 11:22:35.780742 1624646 infer_handler.h:994] Destructed ModelStreamInferHandler
+�0111 11:22:35.780755 1624646 infer_handler.h:994] Destructed ModelInferHandler
+�0111 11:22:35.780764 1624646 infer_handler.h:994] Destructed ModelInferHandler
+Apptainer> I0111 11:22:36.291351 1635253 pb_stub.cc:1551]  Non-graceful termination detected. 

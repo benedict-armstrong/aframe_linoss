@@ -1,0 +1,41 @@
+name: "snapshotter"
+platform: "onnxruntime_onnx"
+input {
+  name: "stream"
+  data_type: TYPE_FP32
+  dims: 2
+  dims: 2
+  dims: 16384
+}
+output {
+  name: "strain"
+  data_type: TYPE_FP32
+  dims: 2
+  dims: 2
+  dims: 159616
+}
+instance_group {
+  count: 6
+  kind: KIND_GPU
+}
+sequence_batching {
+  max_sequence_idle_microseconds: 60000000000
+  direct {
+  }
+  state {
+    input_name: "input_snapshot"
+    output_name: "output_snapshot"
+    data_type: TYPE_FP32
+    dims: 2
+    dims: 2
+    dims: 143232
+    initial_state {
+      data_type: TYPE_FP32
+      dims: 2
+      dims: 2
+      dims: 143232
+      zero_data: true
+      name: "snapshot"
+    }
+  }
+}

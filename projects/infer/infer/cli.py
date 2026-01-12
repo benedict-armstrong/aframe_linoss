@@ -54,7 +54,9 @@ def main(args=None):
 
     cfg = parser.instantiate_classes(cfg)
     with cfg.client:
-        background, foreground = infer(cfg.client, cfg.data, cfg.postprocessor)
+        background, foreground = infer(
+            cfg.client, cfg.data, cfg.postprocessor, False
+        )
 
     if cfg.outdir is not None:
         background.write(background_path)

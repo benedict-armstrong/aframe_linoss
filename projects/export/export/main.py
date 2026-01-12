@@ -132,13 +132,15 @@ def export(
 
     # Infer the shape of each input from the batch file.
     # Assumes the output is stored as "y"
-    with open_file(batch_file, "rb") as f:
-        batch_file = h5py.File(io.BytesIO(f.read()))
-        input_shape_dict = {
-            key: (batch_size,) + tuple(batch_file[key].shape[1:])
-            for key in batch_file.keys()
-            if key != "y"
-        }
+    # with open_file(batch_file, "rb") as f:
+    #     batch_file = h5py.File(io.BytesIO(f.read()))
+    #     input_shape_dict = {
+    #         key: (batch_size,) + tuple(batch_file[key].shape[1:])
+    #         for key in batch_file.keys()
+    #         if key != "y"
+    #     }
+    input_shape_dict = {"X": (batch_size, num_ifos, int(sample_rate * kernel_length))}
+    print(input_shape_dict)
 
     # the network will have some different keyword
     # arguments required for export depending on
@@ -207,7 +209,5 @@ def export(
     # keep snapshot states around for a long time in case there are
     # unexpected bottlenecks which throttle update for a few seconds
     snapshotter = repo.models["snapshotter"]
-    snapshotter.config.sequence_batching.max_sequence_idle_microseconds = int(
-        6e10
-    )
+    snapshotter.config.sequence_batching.max_sequence_idle_microseconds = int(6e10)
     snapshotter.config.write()

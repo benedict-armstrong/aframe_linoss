@@ -1,0 +1,53 @@
+name: "aframe-stream"
+platform: "ensemble"
+input {
+  name: "stream"
+  data_type: TYPE_FP32
+  dims: 2
+  dims: 2
+  dims: 16384
+}
+output {
+  name: "discriminator"
+  data_type: TYPE_FP32
+  dims: 128
+  dims: 1
+}
+ensemble_scheduling {
+  step {
+    model_name: "snapshotter"
+    model_version: -1
+    input_map {
+      key: "stream"
+      value: "stream"
+    }
+    output_map {
+      key: "strain"
+      value: "strain"
+    }
+  }
+  step {
+    model_name: "preprocessor"
+    model_version: -1
+    input_map {
+      key: "strain"
+      value: "strain"
+    }
+    output_map {
+      key: "X"
+      value: "X"
+    }
+  }
+  step {
+    model_name: "aframe"
+    model_version: -1
+    input_map {
+      key: "X"
+      value: "X"
+    }
+    output_map {
+      key: "discriminator"
+      value: "discriminator"
+    }
+  }
+}

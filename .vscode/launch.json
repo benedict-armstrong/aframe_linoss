@@ -1,0 +1,55 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Infer",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "infer.cli",
+            // set directory to ''${workspaceFolder}/projects/infer'' to run from the root of the workspace
+            "cwd": "${workspaceFolder}/projects/infer",
+            "justMyCode": false,
+            "args": [
+                "--client.address",
+                "g107.internal.cluster.is.localnet:8001",
+                "--client.model_name",
+                "aframe-stream",
+                "--data.background_fname",
+                "/home/barmstrong/aframe_new/data/bns/background_data/background/background-1241443783-10796.hdf5",
+                "--data.injection_set_fname",
+                "/home/barmstrong/aframe_new/data/bns/aframe/waveforms.hdf5",
+                "--data.ifos",
+                "['H1', 'L1']",
+                "--data.shifts",
+                "[0, 1]",
+                "--data.inference_sampling_rate",
+                "16.0",
+                "--data.batch_size",
+                "128",
+                "--postprocessor.psd_length",
+                "64.0",
+                "--postprocessor.fduration",
+                "2.0",
+                "--postprocessor.integration_window_length",
+                "1.0",
+                "--postprocessor.cluster_window_length",
+                "4.0",
+                "--outdir",
+                "/home/barmstrong/aframe_new/runs/infer_test_debug/"
+            ]
+        },
+        {
+            "name": "Plot",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "plots.legacy.cli",
+            // set directory to ''${workspaceFolder}/projects/infer'' to run from the root of the workspace
+            "cwd": "${workspaceFolder}/projects/plots",
+            "justMyCode": false,
+            "args": []
+        },
+    ]
+}

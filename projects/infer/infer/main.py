@@ -75,7 +75,12 @@ def infer(
         # warm up and to check to be sure we're not
         # hitting any inference errors
         if not i:
+            j = 0
             while not sequence.started:
+                print(
+                    f"Waiting for first inference response... {j}", flush=True
+                )
+                j += 1
                 client.get()
                 time.sleep(1e-2)
 
@@ -84,6 +89,8 @@ def infer(
         result = client.get()
         time.sleep(1e-1)
     logging.info("Inference complete, postprocessing output timeseries")
+
+    print("Result:", result, flush=True)
 
     background_ts, foreground_ts = result
     background = postprocessor(background_ts)

@@ -1,32 +1,32 @@
-# commented args (i.e. comments with colon at end 
+# commented args (i.e. comments with colon at end
 # to illustrate a value needs to be filled out)
 # represent values filled out
 # by the export task at run time. To build a functional
 # standalone config, add these in yourself.
 
-# logfile: 
-# weights: 
-# batch_file: 
-# repository_directory: 
+logfile: logs/export.log
+weights: model.pt
+batch_file: export_batch.txt
+repository_directory: test_repo/
 num_ifos: 2
-kernel_length: 1.5
-inference_sampling_rate: 4
+kernel_length: 4.0
+inference_sampling_rate: 16.0
 sample_rate: 2048
 batch_size: 128
-fduration: 1
+fduration: 2
 psd_length: 64
 preprocessor:
   class_path: utils.preprocessing.BatchWhitener
   init_args:
-    kernel_length: 1.5
+    kernel_length: 4.0
     sample_rate: 2048
-    inference_sampling_rate: 4
+    inference_sampling_rate: 16.0
     batch_size: 128
-    fduration: 1
+    fduration: 2
     fftlength: 2
     highpass: 32
 streams_per_gpu: 6
 aframe_instances: 1
-platform: TENSORRT
+platform: ONNX
 clean: false
-verbose: false
+verbose: true

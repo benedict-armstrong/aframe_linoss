@@ -1,0 +1,10 @@
+Bootstrap: localimage
+# From: /fast/barmstrong/container/aframe/tritonserver:23.04-py.sif
+From: /fast/barmstrong/container/aframe/tritonserver_25.06-py3.sif
+
+%post
+    # Commands to run inside the container during build
+    pip install --upgrade "jax[cuda12]>=0.4.13" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+    pip install --upgrade "jaxlib[cuda12]>=0.4.13" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+    # install flatbuffers
+    pip install --upgrade flatbuffers

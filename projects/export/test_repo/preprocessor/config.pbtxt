@@ -1,0 +1,16 @@
+name: "preprocessor"
+platform: "pytorch_libtorch"
+input {
+  name: "strain"
+  data_type: TYPE_FP32
+  dims: 2
+  dims: 2
+  dims: 159616
+}
+output {
+  name: "X"
+  data_type: TYPE_FP32
+  dims: 128
+  dims: 2
+  dims: 8192
+}
