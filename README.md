@@ -12,5 +12,5 @@ Start triton server manually by
 ```bash
 a100 # request a100 node
 singularity shell  --nv /fast/barmstrong/container/aframe/tritonserver_25.06-py3_jax.sif
-tritonserver --model-repository=runs/model_repository --log-verbose=1
+tritonserver --model-repository=runs/model_repository
 ```

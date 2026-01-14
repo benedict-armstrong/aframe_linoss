@@ -23,6 +23,11 @@ def build_parser():
 
     parser.link_arguments("data", "client.callback", apply_on="instantiate")
     parser.link_arguments(
+        "client.address",
+        "data.triton_address",
+        apply_on="parse",
+    )
+    parser.link_arguments(
         "data.inference_sampling_rate",
         "postprocessor.inference_sampling_rate",
         apply_on="parse",

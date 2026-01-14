@@ -82,7 +82,8 @@ class InferBase(
 
     @property
     def num_clients(self):
-        # account for two streams per condor job: background and injection
+        # account for two streams per condor job: background and injecti
+        # 24
         return self.streams_per_gpu * self.num_gpus // 2
 
     @property
@@ -219,6 +220,7 @@ class InferBase(
             shifts=shifts,
             background_fname=fname,
             injection_set_fname=self.injection_set_fname,
+            triton_address=ip,
         )
 
         postprocessor = Postprocessor(

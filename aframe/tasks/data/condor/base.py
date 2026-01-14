@@ -120,6 +120,7 @@ class LDGCondorWorkflow(htcondor.HTCondorWorkflow):
         config.custom_content.append(("environment", environment))
         config.custom_content.append(("stream_error", "True"))
         config.custom_content.append(("stream_output", "True"))
+        config.custom_content.append(("priority", -950))
         # config.custom_content.append(
         #     ("accounting_group", self.accounting_group)
         # )

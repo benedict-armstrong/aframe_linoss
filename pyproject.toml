@@ -21,6 +21,8 @@ dependencies = [
     "cloudpathlib>=0.18.1,<0.19",
     "psutil>=5.9.8,<6",
     "jsonargparse>=4.27.1,<5",
+    "matplotlib>=3.10.8",
+    "ipykernel>=6.29.5",
 ]
 
 [project.scripts]

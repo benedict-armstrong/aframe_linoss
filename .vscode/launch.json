@@ -14,7 +14,7 @@
             "justMyCode": false,
             "args": [
                 "--client.address",
-                "g107.internal.cluster.is.localnet:8001",
+                "g122.internal.cluster.is.localnet:8001",
                 "--client.model_name",
                 "aframe-stream",
                 "--data.background_fname",
@@ -46,10 +46,26 @@
             "type": "debugpy",
             "request": "launch",
             "module": "plots.legacy.cli",
-            // set directory to ''${workspaceFolder}/projects/infer'' to run from the root of the workspace
             "cwd": "${workspaceFolder}/projects/plots",
             "justMyCode": false,
-            "args": []
+            "args": [
+                "--background",
+                "/home/barmstrong/aframe_new/runs/infer_test_debug/background.hdf5",
+                "--foreground",
+                "/home/barmstrong/aframe_new/runs/infer_test_debug/foreground.hdf5",
+                "--rejected_params",
+                "/home/barmstrong/aframe_new/data/bns/aframe/rejected-parameters.hdf5",
+                "--ifos",
+                "['H1', 'L1']",
+                "--mass_combos",
+                "[[1.4,1.4], [1.5, 1.5], [2.0, 2.0], [2.3, 2.3]]",
+                "--source_prior",
+                "priors.priors.end_o3_ratesandpops_bns",
+                "--output_dir",
+                "/home/barmstrong/aframe_new/runs/infer_test_debug/plots/",
+                "--dt",
+                "1",
+            ]
         },
     ]
 }

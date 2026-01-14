@@ -1,15 +1,115 @@
 import logging
 import math
+import time
 from contextlib import nullcontext
 from typing import Optional
 from zlib import adler32
 
 import h5py
 import numpy as np
-from ratelimiter import RateLimiter
+import requests
 
 from ledger.events import EventSet, RecoveredInjectionSet
 from ledger.injections import InterferometerResponseSet, waveform_class_factory
+
+
+class MetricsRateLimiter:
+    """
+    Rate limiter that polls Triton server metrics and waits
+    when pending requests exceed a threshold.
+    """
+
+    def __init__(
+        self,
+        metrics_url: str,
+        max_pending_requests: int = 5000,
+        poll_interval: float = 0.1,
+        model: str = "preprocessor",
+    ):
+        """
+        Args:
+            metrics_url:
+                URL to the Triton metrics endpoint (e.g., "http://g145.internal.cluster.is.localnet:8002/metrics")
+            max_pending_requests:
+                Maximum number of pending requests before throttling
+            poll_interval:
+                How often to poll metrics when waiting (in seconds)
+            model:
+                The model name to check pending requests for
+        """
+        self.metrics_url = metrics_url
+        self.max_pending_requests = max_pending_requests
+        self.poll_interval = poll_interval
+        self.model = model
+
+    def _get_pending_requests(self) -> int:
+        """Fetch the current pending request count from Triton metrics."""
+        try:
+            response = requests.get(self.metrics_url, timeout=2)
+            response.raise_for_status()
+            for line in response.text.splitlines():
+                if line.startswith("#") or not line.strip():
+                    continue
+                # Look for nv_inference_pending_request_count for our model
+                if (
+                    "nv_inference_pending_request_count" in line
+                    and f'model="{self.model}"' in line
+                ):
+                    try:
+                        value = float(line.rsplit(" ", 1)[1])
+                        return int(value)
+                    except (IndexError, ValueError):
+                        continue
+            return 0
+        except requests.RequestException as e:
+            logging.warning(f"Failed to fetch metrics: {e}")
+            # If we can't fetch metrics, don't block
+            return 0
+
+    def wait_if_needed(self):
+        """Wait until pending requests drop below the threshold."""
+        pending = self._get_pending_requests()
+        if pending >= self.max_pending_requests:
+            logging.debug(
+                f"Pending requests ({pending}) >= threshold "
+                f"({self.max_pending_requests}), waiting..."
+            )
+        while pending >= self.max_pending_requests:
+            time.sleep(self.poll_interval)
+            pending = self._get_pending_requests()
+
+    def __enter__(self):
+        self.wait_if_needed()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
+def build_metrics_url(address: str) -> str:
+    """
+    Build the Triton metrics URL from the inference server address.
+
+    Args:
+        address: Triton server address (e.g., "g145:8001" or
+                 "g145.internal.cluster.is.localnet:8001")
+
+    Returns:
+        Metrics URL (e.g., "http://g145.internal.cluster.is.localnet:8002/metrics")
+    """
+    # Remove any protocol prefix if present
+    if "://" in address:
+        address = address.split("://", 1)[1]
+
+    # Split host and port
+    if ":" in address:
+        host = address.rsplit(":", 1)[0]
+    else:
+        host = address
+
+    print(f"Built metrics URL for Triton server at host: {host}")
+
+    return f"http://{host}:8002/metrics"
 
 
 class Sequence:
@@ -21,7 +121,9 @@ class Sequence:
         shifts: list[float],
         inference_sampling_rate: float,
         batch_size: int,
-        rate: Optional[float] = None,
+        triton_address: str,
+        max_pending_requests: int = 5000,
+        **kwargs,
     ):
         """
         Object used for iterating over a segment of data,
@@ -29,7 +131,7 @@ class Sequence:
         aggregating the returned inference outputs.
 
         If the injection set is empty for this given
-        segment and shifts, infernece on injections will be skipped,
+        segment and shifts, inference on injections will be skipped,
         and `None` will be returned for the foreground events.
 
         Args:
@@ -45,15 +147,19 @@ class Sequence:
                 Rate at which inference is performed
             batch_size:
                 Number of inference requests to send to the model at once
-            rate:
-                Rate at which to send requests in Hz
+            triton_address:
+                Address of the Triton inference server (e.g., "g145.internal.cluster.is.localnet").
+                Used to poll metrics for rate limiting. If None, no rate limiting.
+            max_pending_requests:
+                Maximum pending requests before throttling (default 5000)
         """
         logging.info("Initializing sequence")
 
         self.background_fname = background_fname
         self.inference_sampling_rate = inference_sampling_rate
         self.batch_size = batch_size
-        self.rate = rate
+        self.metrics_url = build_metrics_url(triton_address)
+        self.max_pending_requests = max_pending_requests
         self.ifos = ifos
 
         print(
@@ -172,15 +278,11 @@ class Sequence:
         return math.ceil((self.size - max(self.shifts)) / self.step_size)
 
     def __iter__(self):
-        if self.rate is not None:
-            # rate refers to the average number of requests
-            # per second, but remember that each yield
-            # corresponds to two inference requests. Rather
-            # than splitting the period in half, we'll allow
-            # two calls during a given period to help account
-            # for the time required to e.g. serialize the data
-            # into inference requests
-            limiter = RateLimiter(max_calls=2, period=3.5 / self.rate)
+        if self.metrics_url is not None:
+            limiter = MetricsRateLimiter(
+                metrics_url=self.metrics_url,
+                max_pending_requests=self.max_pending_requests,
+            )
         else:
             limiter = nullcontext()
 
@@ -218,7 +320,9 @@ class Sequence:
                 x_inj = None
                 offset = i * self.batch_size / self.inference_sampling_rate
                 if self.injection_set is not None:
-                    x_inj = self.injection_set.inject(x.copy(), self.t0 + offset)
+                    x_inj = self.injection_set.inject(
+                        x.copy(), self.t0 + offset
+                    )
 
                 # return the two sets of updates, possibly
                 # rate limited if we specified a max rate
