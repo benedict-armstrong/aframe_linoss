@@ -47,12 +47,14 @@
             "request": "launch",
             "module": "plots.legacy.cli",
             "cwd": "${workspaceFolder}/projects/plots",
+            // set interpreter path to "${workspaceFolder}/projects/plots/venv/bin/python"
+            "python": "${workspaceFolder}/projects/plots/.venv/bin/python",
             "justMyCode": false,
             "args": [
                 "--background",
-                "/home/barmstrong/aframe_new/runs/infer_test_debug/background.hdf5",
+                "/home/barmstrong/aframe_new/aframe_results/runs/cusfflm4/results_aframe/background.hdf5",
                 "--foreground",
-                "/home/barmstrong/aframe_new/runs/infer_test_debug/foreground.hdf5",
+                "/home/barmstrong/aframe_new/aframe_results/runs/cusfflm4/results_aframe/foreground.hdf5",
                 "--rejected_params",
                 "/home/barmstrong/aframe_new/data/bns/aframe/rejected-parameters.hdf5",
                 "--ifos",

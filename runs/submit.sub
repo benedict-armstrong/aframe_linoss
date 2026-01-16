@@ -5,7 +5,7 @@ output = /fast/barmstrong/outputs/$(Cluster).out
 log = /fast/barmstrong/outputs/$(Cluster).log
 request_memory = 800G
 request_cpus = 40
-request_gpus = 8
+request_gpus = 7
 requirements = (TARGET.CUDAGlobalMemoryMb > 60000) && regexp("A100", TARGET.CUDADeviceName)
 MaxTime = 57600
 periodic_remove = (JobStatus =?= 2) && ((CurrentTime - JobCurrentStartDate) >= $(MaxTime))
