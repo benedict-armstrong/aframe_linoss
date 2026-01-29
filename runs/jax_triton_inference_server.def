@@ -2,9 +2,30 @@ Bootstrap: localimage
 # From: /fast/barmstrong/container/aframe/tritonserver:23.04-py.sif
 From: /fast/barmstrong/container/aframe/tritonserver_25.06-py3.sif
 
+%files
+    /home/barmstrong/ssm_bench/src /opt/ssm_bench/
+    /home/barmstrong/ssm_bench/pyproject.toml /opt/ssm_bench/
+    /home/barmstrong/ssm_bench/uv.lock /opt/ssm_bench/
+    /home/barmstrong/ssm_bench/LICENSE /opt/ssm_bench/
+    /home/barmstrong/ssm_bench/README.md /opt/ssm_bench/
+    
+
+%environment
+    # This "activates" the venv by putting its bin at the front of the PATH
+    export VIRTUAL_ENV=/opt/venv
+    export PATH="/opt/venv/bin:$PATH"
+    # Prevents Python from looking at host-side ~/.local/lib
+    export PYTHONNOUSERSITE=1
+
 %post
-    # Commands to run inside the container during build
-    pip install --upgrade "jax[cuda12]>=0.4.13" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-    pip install --upgrade "jaxlib[cuda12]>=0.4.13" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-    # install flatbuffers
-    pip install --upgrade flatbuffers
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    source $HOME/.local/bin/env
+    # export requirements.txt from uv
+
+    cd /opt/ssm_bench
+    uv venv /opt/venv
+    source /opt/venv/bin/activate
+    uv pip install .[cu12]
+
+    # Clean up uv cache to keep image size small
+    uv cache clean

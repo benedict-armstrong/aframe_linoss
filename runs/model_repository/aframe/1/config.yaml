@@ -1,0 +1,169 @@
+wandb:
+  mode: online
+  name: ${dataset.name}/${oc.select:model.encoder.name,''}
+  project: ligoss
+mode: all
+test:
+  output_path: outputs/results
+  batch_size: 128
+dataset:
+  train:
+    name: on_the_fly
+    root_path: data/bns/on_the_fly
+    shuffle: true
+    num_workers: 20
+    window: ${dataset.window}
+    targets: ${dataset.targets}
+  val:
+    name: bns_classification
+    root_path: data/bns
+    shuffle: true
+    num_workers: 4
+    targets: ${dataset.targets}
+    window: ${dataset.window}
+  test:
+    name: bns_classification
+    root_path: data/bns
+    shuffle: true
+    num_workers: 4
+    targets: ${dataset.targets}
+    window: ${dataset.window}
+  window:
+  - -10192
+  - -2000
+  name: ${dataset.train.name}
+  targets:
+  - snr
+  - label
+  - mass_params
+seed: 42
+train:
+  lr:
+    name: warmup_cosine_decay_schedule
+    init_value: 1.0e-05
+    peak_value: 5.0e-05
+    warmup_steps: 1
+    decay_steps: ${train.max_steps}
+    end_value: 1.0e-05
+  min_steps: 100000
+  max_steps: 500000
+  batch_size: 128
+  val_check_interval: 1000
+  gradient_clip_norm: 100.0
+  checkpoint:
+    metric: val/loss
+    warmup_steps: 1500
+    every_n_steps: 5000
+model:
+  name: ssm
+  heads:
+    snr:
+      name: regression
+      label: snr
+      reduce_time: mean
+      metrics:
+      - mse
+      - rel_mse
+      - l1_loss
+      - snr_magnitude
+      - accuracy_by_snr
+      - accuracy_snr_cutoff
+      - l1_magnitude
+      loss_fns:
+      - name: mse
+        weight: 0.05
+    label:
+      name: classification
+      metrics:
+      - accuracy
+      - auc_roc
+      - snr_magnitude
+      - tpr_at_fpr_0_001
+      - fpr_at_0_5_tpr
+      - efficiency_vs_snr
+      - roc_plot
+      - classification_visualization
+      - accuracy_pos_class
+      - accuracy_neg_class
+      - decision_threshold_vs_detected_events
+      loss_fns:
+      - name: cross_entropy
+        cls_weights:
+        - 10.0
+        - 1.0
+    mass_params:
+      name: regression
+      reduce_time: mean
+      output_dim: 4
+      add_relu: true
+      metrics:
+      - gll_mse
+      - gll_rel_mse
+      - gll_l1_loss
+      - gll_regression_corner_plot
+      - gll_distribution_comparison
+      loss_fns:
+      - name: gaussian_nll
+        weight: 0.1
+  backbone:
+    name: linoss
+    num_blocks: 3
+    hidden_dim: 128
+    dropout_rate: 0
+    sequence_mixers:
+      name: linoss
+      discretization: IMEX
+      damping: true
+      dim: 64
+      theta_max: 3.141592653589793
+      r_min: 0.9
+      num_As: 1
+  use_dain: true
+  encoder:
+    name: composite
+    encoder_cfgs:
+    - name: q_transform
+      num_q_transform_features: 181
+      model_cfg:
+        name: cnn
+        hidden_dim: ${model.backbone.hidden_dim}
+        activation: jax.nn.gelu
+        layers:
+        - name: cnn_layer
+          out_channels: ${model.backbone.hidden_dim}
+          kernel_size: 7
+          stride: 1
+          padding: 3
+        - name: cnn_layer
+          out_channels: ${model.backbone.hidden_dim}
+          kernel_size: 5
+          stride: 1
+          padding: 2
+        - name: cnn_layer
+          out_channels: ${model.backbone.hidden_dim}
+          kernel_size: 3
+          stride: 1
+          padding: 1
+    - name: sequence_mixer_encoder
+      hidden_dim: ${model.backbone.hidden_dim}
+      model_cfg:
+        name: cnn
+        hidden_dim: ${model.backbone.hidden_dim}
+        activation: jax.nn.gelu
+        layers:
+        - name: cnn_layer
+          out_channels: ${model.backbone.hidden_dim}
+          kernel_size: 7
+          stride: 1
+          padding: 3
+        - name: cnn_layer
+          out_channels: ${model.backbone.hidden_dim}
+          kernel_size: 5
+          stride: 1
+          padding: 2
+        - name: cnn_layer
+          out_channels: ${model.backbone.hidden_dim}
+          kernel_size: 3
+          stride: 1
+          padding: 1
+load_from_checkpoint: /lustre/fast/fast/barmstrong/outputs/singlerun/2026-01-23/12-57-35/aacb/checkpoints/checkpoint_step_95000.eqx

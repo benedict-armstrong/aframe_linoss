@@ -14,3 +14,10 @@ a100 # request a100 node
 singularity shell  --nv /fast/barmstrong/container/aframe/tritonserver_25.06-py3_jax.sif
 tritonserver --model-repository=runs/model_repository
 ```
+
+Build triton server container by first getting a suitable node (to avoid proc ... error) and then running
+
+```bash
+condor_submit_bid 25 -i -append 'request_memory=81920' -append 'request_cpus=10' -append 'request_disk=100G' -append '+BypassLXCfs="true"'
+singularity build --nv /fast/barmstrong/container/aframe/tritonserver_25.06-py3_jax_2.sif runs/jax_triton_inference_server.def
+```

@@ -52,9 +52,11 @@
             "justMyCode": false,
             "args": [
                 "--background",
-                "/home/barmstrong/aframe_new/aframe_results/runs/cusfflm4/results_aframe/background.hdf5",
+                "/home/barmstrong/aframe_new/aframe_results/runs/3nnukeuk/results_aframe/background.hdf5",
+                //"/home/barmstrong/aframe_new/aframe_results/runs/ggsu6e9m/results_aframe/tmp/tmp-106/background.hdf5",
                 "--foreground",
-                "/home/barmstrong/aframe_new/aframe_results/runs/cusfflm4/results_aframe/foreground.hdf5",
+                "/home/barmstrong/aframe_new/aframe_results/runs/3nnukeuk/results_aframe/foreground.hdf5",
+                //"/home/barmstrong/aframe_new/aframe_results/runs/ggsu6e9m/results_aframe/tmp/tmp-106/foreground.hdf5",
                 "--rejected_params",
                 "/home/barmstrong/aframe_new/data/bns/aframe/rejected-parameters.hdf5",
                 "--ifos",
@@ -64,7 +66,7 @@
                 "--source_prior",
                 "priors.priors.end_o3_ratesandpops_bns",
                 "--output_dir",
-                "/home/barmstrong/aframe_new/runs/infer_test_debug/plots/",
+                "/home/barmstrong/aframe_new/aframe_results/runs/3nnukeuk/results_aframe/plots/",
                 "--dt",
                 "1",
             ]

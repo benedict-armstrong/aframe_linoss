@@ -12,7 +12,7 @@ num_ifos: 2
 kernel_length: 4.0
 inference_sampling_rate: 16.0
 sample_rate: 2048
-batch_size: 128
+batch_size: 512
 fduration: 2
 psd_length: 64
 preprocessor:
@@ -21,10 +21,10 @@ preprocessor:
     kernel_length: 4.0
     sample_rate: 2048
     inference_sampling_rate: 16.0
-    batch_size: 128
+    batch_size: 512
     fduration: 2
     fftlength: 2
-    highpass: 32
+    highpass: 20
 streams_per_gpu: 6
 aframe_instances: 4
 platform: ONNX

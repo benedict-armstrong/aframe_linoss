@@ -5,12 +5,16 @@ input {
   data_type: TYPE_FP32
   dims: 2
   dims: 2
-  dims: 159616
+  dims: 208768
 }
 output {
   name: "X"
   data_type: TYPE_FP32
-  dims: 128
+  dims: 512
   dims: 2
   dims: 8192
+}
+instance_group {
+  count: 3
+  kind: KIND_GPU
 }

@@ -1,8 +1,6 @@
-import io
 import logging
 from typing import Optional
 
-import h5py
 import hermes.quiver as qv
 import torch
 

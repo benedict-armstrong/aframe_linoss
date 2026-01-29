@@ -54,6 +54,11 @@ default-groups = [
 [tool.uv.sources]
 utils = { path = "./libs/utils", editable = true }
 
+[tool.uv.workspace]
+members = [
+    "inference_server",
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

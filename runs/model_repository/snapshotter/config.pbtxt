@@ -15,8 +15,16 @@ output {
   dims: 159616
 }
 instance_group {
-  count: 6
+  count: 8
   kind: KIND_GPU
+}
+parameters {
+  key: "intra_op_thread_count"
+  value: { string_value: "4" }
+}
+parameters {
+  key: "inter_op_thread_count"
+  value: { string_value: "4" }
 }
 sequence_batching {
   max_sequence_idle_microseconds: 60000000000
