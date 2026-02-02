@@ -15,6 +15,8 @@ from .ssm_bench import InferenceModel
 
 import triton_python_backend_utils as pb_utils
 
+BATCH_SIZE = 512
+
 
 class TritonPythonModel:
     """Your Python model must use the same class name. Every Python model
@@ -50,7 +52,6 @@ class TritonPythonModel:
 
         # You must parse model_config. JSON string is not parsed here
         self.model_config = model_config = json.loads(args["model_config"])
-        # batch_size = pb_utils.get_batch_size(model_config)
 
         # Get the GPU device ID assigned by Triton for this instance
         self.device_id = int(args.get("model_instance_device_id", "0"))
@@ -61,7 +62,7 @@ class TritonPythonModel:
             "/lustre/home/barmstrong/aframe_new/runs/model_repository/aframe/1/config.yaml"
         )
         weights_file = Path(
-            "/lustre/home/barmstrong/aframe_new/runs/model_repository/aframe/1/checkpoint_step_83026.eqx"
+            "/lustre/home/barmstrong/aframe_new/runs/model_repository/aframe/1/weights.eqx"
         )
 
         cfg = OmegaConf.load(config_file)
@@ -87,7 +88,7 @@ class TritonPythonModel:
 
         # run a dummy inference to make sure model is jit compiled
         # Place tensors on the correct GPU device
-        input = jax.device_put(jnp.ones((128, 8192, 2)), self.device)
+        input = jax.device_put(jnp.ones((BATCH_SIZE, 8192, 2)), self.device)
         result = self.model(input)
         print(
             "Inizialized model result: ",

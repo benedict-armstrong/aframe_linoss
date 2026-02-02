@@ -1,0 +1,287 @@
+Loading cuda/12.9
+  Loading requirement: cudnn/9.10.2
+/lustre/home/barmstrong/aframe_new/.venv/lib/python3.12/site-packages/luigi/task_register.py:80: UserWarning: return_timeseries is set to 'True', and based on the given Tb 31536000.0 and inference sampling rate 16.0, this will generate a large amount of data, and the aggregation process will be slow. It is not recommended to save the output timeseries for long timeslides or high inference rates
+  return super(Register, cls).__call__(*args, **kwargs)
+INFO: luigi-interface - Informed scheduler that task   Infer_31536000_0_512__1_a6f0187f26   has status   PENDING
+INFO: Informed scheduler that task   Infer_31536000_0_512__1_a6f0187f26   has status   PENDING
+INFO: luigi-interface - Informed scheduler that task   DeployInferLocal_31536000_0_512__1_552e2e11f6   has status   PENDING
+INFO: Informed scheduler that task   DeployInferLocal_31536000_0_512__1_552e2e11f6   has status   PENDING
+INFO: luigi-interface - Informed scheduler that task   TestingWaveforms__home_barmstrong__1__37b9708acf   has status   DONE
+INFO: Informed scheduler that task   TestingWaveforms__home_barmstrong__1__37b9708acf   has status   DONE
+INFO: luigi-interface - Informed scheduler that task   FetchTest__1__False_96cb2121d2   has status   DONE
+INFO: Informed scheduler that task   FetchTest__1__False_96cb2121d2   has status   DONE
+INFO: luigi-interface - Done scheduling tasks
+INFO: Done scheduling tasks
+INFO: luigi-interface - Running Worker with 1 processes
+INFO: Running Worker with 1 processes
+INFO: luigi-interface - [pid 3564386] Worker Worker(salt=1114073578, workers=1, host=i303, username=barmstrong, pid=3564386) running   DeployInferLocal(effective_workflow=htcondor, branch=-1, image=/fast/barmstrong/container/aframe/infer.sif, request_disk=10G, request_memory=16G, request_cpus=1, ifos=["H1", "L1"], inference_sampling_rate=16.0, batch_size=512, psd_length=64.0, cluster_window_length=8.0, integration_window_length=1.0, fduration=2.0, Tb=31536000.0, shifts=[0, 1], sequence_id=1001, model_name=aframe-stream, model_version=-1, streams_per_gpu=6, rate_per_gpu=8.0, zero_lag=True, return_timeseries=True, output_dir=/fast/barmstrong/aframe_results/runs/jb2o09t7/results_aframe, train_task=Infer, condor_directory=/fast/barmstrong/aframe_results/runs/jb2o09t7/condor/infer, triton_image=/fast/barmstrong/container/aframe/tritonserver_25.06-py3_jax_2.sif, workflow=htcondor)
+INFO: [pid 3564386] Worker Worker(salt=1114073578, workers=1, host=i303, username=barmstrong, pid=3564386) running   DeployInferLocal(effective_workflow=htcondor, branch=-1, image=/fast/barmstrong/container/aframe/infer.sif, request_disk=10G, request_memory=16G, request_cpus=1, ifos=["H1", "L1"], inference_sampling_rate=16.0, batch_size=512, psd_length=64.0, cluster_window_length=8.0, integration_window_length=1.0, fduration=2.0, Tb=31536000.0, shifts=[0, 1], sequence_id=1001, model_name=aframe-stream, model_version=-1, streams_per_gpu=6, rate_per_gpu=8.0, zero_lag=True, return_timeseries=True, output_dir=/fast/barmstrong/aframe_results/runs/jb2o09t7/results_aframe, train_task=Infer, condor_directory=/fast/barmstrong/aframe_results/runs/jb2o09t7/condor/infer, triton_image=/fast/barmstrong/container/aframe/tritonserver_25.06-py3_jax_2.sif, workflow=htcondor)
+000 (16821765.000.000) 2026-01-31 22:07:51 Job submitted from host: <10.15.2.1:9618?PrivAddr=%3c172.22.0.101:9618%3fsock%3dschedd_3827_9508%3e&PrivNet=internal.cluster.is.localnet&addrs=10.15.2.1-9618&alias=sched.cluster.is.localnet&noUDP&sock=schedd_3827_9508>
+...
+001 (16821765.000.000) 2026-01-31 22:07:56 Job executing on host: <172.22.8.19:9618?addrs=172.22.8.19-9618&alias=i303.internal.cluster.is.localnet&noUDP&sock=startd_12526_5f63>
+...
+006 (16821765.000.000) 2026-01-31 22:08:05 Image size of job updated: 172176
+	110  -  MemoryUsage of job (MB)
+	112332  -  ResidentSetSize of job (KB)
+...
+006 (16821765.000.000) 2026-01-31 22:13:06 Image size of job updated: 2977234628
+	319498  -  MemoryUsage of job (MB)
+	327165264  -  ResidentSetSize of job (KB)
+...
+006 (16821765.000.000) 2026-01-31 22:18:07 Image size of job updated: 2978475312
+	371001  -  MemoryUsage of job (MB)
+	379904836  -  ResidentSetSize of job (KB)
+...
+006 (16821765.000.000) 2026-01-31 22:23:07 Image size of job updated: 3323519416
+	598243  -  MemoryUsage of job (MB)
+	612600168  -  ResidentSetSize of job (KB)
+...
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2025 NVIDIA Corporation
+Built on Tue_May_27_02:21:03_PDT_2025
+Cuda compilation tools, release 12.9, V12.9.86
+Build cuda_12.9.r12.9/compiler.36037853_0
+Sat Jan 31 22:07:58 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA B200                    On  |   00000000:03:00.0 Off |                    0 |
+| N/A   33C    P0            146W / 1000W |       0MiB / 183359MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA B200                    On  |   00000000:13:00.0 Off |                    0 |
+| N/A   37C    P0            151W / 1000W |       0MiB / 183359MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA B200                    On  |   00000000:63:00.0 Off |                    0 |
+| N/A   31C    P0            145W / 1000W |       0MiB / 183359MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA B200                    On  |   00000000:73:00.0 Off |                    0 |
+| N/A   37C    P0            147W / 1000W |       0MiB / 183359MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   4  NVIDIA B200                    On  |   00000000:83:00.0 Off |                    0 |
+| N/A   31C    P0            146W / 1000W |       0MiB / 183359MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   5  NVIDIA B200                    On  |   00000000:93:00.0 Off |                    0 |
+| N/A   37C    P0            150W / 1000W |       0MiB / 183359MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   6  NVIDIA B200                    On  |   00000000:E3:00.0 Off |                    0 |
+| N/A   32C    P0            147W / 1000W |       0MiB / 183359MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   7  NVIDIA B200                    On  |   00000000:F3:00.0 Off |                    0 |
+| N/A   37C    P0            150W / 1000W |       0MiB / 183359MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+Starting Aframe run for model ID: jb2o09t7
+15:4: not a valid test operator:  
+15:4: not a valid test operator: 12.9
+21:4: not a valid test operator: (
+21:4: not a valid test operator: 580.82.07
+
+Hostname: i303.internal.cluster.is.localnet
+singularity -s instance start --nv /fast/barmstrong/container/aframe/tritonserver_25.06-py3_jax_2.sif arid_egg_7776
+going to submit 48 htcondor job(s)
+submitted 48 htcondor job(s)
+22:11:26: all: 3339, unsubmitted: 3291 (+3291), pending: 0 (+0), running: 48 (+48), finished: 0 (+0), retry: 0 (+0), failed: 0 (+0)
+22:11:39: all: 3339, unsubmitted: 3291 (+0), pending: 0 (+0), running: 48 (+0), finished: 0 (+0), retry: 0 (+0), failed: 0 (+0)
+22:11:51: all: 3339, unsubmitted: 3291 (+0), pending: 0 (+0), running: 48 (+0), finished: 0 (+0), retry: 0 (+0), failed: 0 (+0)
+22:12:04: all: 3339, unsubmitted: 3291 (+0), pending: 0 (+0), running: 47 (-1), finished: 1 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:12:17: all: 3339, unsubmitted: 3290 (-1), pending: 0 (+0), running: 45 (-2), finished: 4 (+3), retry: 0 (+0), failed: 0 (+0)
+going to submit 3 htcondor job(s)
+submitted 3 htcondor job(s)
+22:12:30: all: 3339, unsubmitted: 3287 (-3), pending: 0 (+0), running: 48 (+3), finished: 4 (+0), retry: 0 (+0), failed: 0 (+0)
+22:12:43: all: 3339, unsubmitted: 3287 (+0), pending: 0 (+0), running: 48 (+0), finished: 4 (+0), retry: 0 (+0), failed: 0 (+0)
+22:12:56: all: 3339, unsubmitted: 3287 (+0), pending: 0 (+0), running: 47 (-1), finished: 5 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:13:09: all: 3339, unsubmitted: 3286 (-1), pending: 0 (+0), running: 47 (+0), finished: 6 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:13:22: all: 3339, unsubmitted: 3285 (-1), pending: 0 (+0), running: 45 (-2), finished: 9 (+3), retry: 0 (+0), failed: 0 (+0)
+going to submit 3 htcondor job(s)
+submitted 3 htcondor job(s)
+22:13:35: all: 3339, unsubmitted: 3282 (-3), pending: 3 (+3), running: 43 (-2), finished: 11 (+2), retry: 0 (+0), failed: 0 (+0)
+going to submit 2 htcondor job(s)
+submitted 2 htcondor job(s)
+22:13:48: all: 3339, unsubmitted: 3280 (-2), pending: 0 (-3), running: 47 (+4), finished: 12 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:14:01: all: 3339, unsubmitted: 3279 (-1), pending: 0 (+0), running: 46 (-1), finished: 14 (+2), retry: 0 (+0), failed: 0 (+0)
+going to submit 2 htcondor job(s)
+submitted 2 htcondor job(s)
+22:14:14: all: 3339, unsubmitted: 3277 (-2), pending: 2 (+2), running: 42 (-4), finished: 18 (+4), retry: 0 (+0), failed: 0 (+0)
+going to submit 4 htcondor job(s)
+submitted 4 htcondor job(s)
+22:14:28: all: 3339, unsubmitted: 3273 (-4), pending: 0 (-2), running: 43 (+1), finished: 23 (+5), retry: 0 (+0), failed: 0 (+0)
+going to submit 5 htcondor job(s)
+submitted 5 htcondor job(s)
+22:14:41: all: 3339, unsubmitted: 3268 (-5), pending: 0 (+0), running: 48 (+5), finished: 23 (+0), retry: 0 (+0), failed: 0 (+0)
+22:14:54: all: 3339, unsubmitted: 3268 (+0), pending: 0 (+0), running: 38 (-10), finished: 33 (+10), retry: 0 (+0), failed: 0 (+0)
+going to submit 10 htcondor job(s)
+submitted 10 htcondor job(s)
+22:15:07: all: 3339, unsubmitted: 3258 (-10), pending: 0 (+0), running: 45 (+7), finished: 36 (+3), retry: 0 (+0), failed: 0 (+0)
+going to submit 3 htcondor job(s)
+submitted 3 htcondor job(s)
+22:15:20: all: 3339, unsubmitted: 3255 (-3), pending: 0 (+0), running: 44 (-1), finished: 40 (+4), retry: 0 (+0), failed: 0 (+0)
+going to submit 4 htcondor job(s)
+submitted 4 htcondor job(s)
+22:15:33: all: 3339, unsubmitted: 3251 (-4), pending: 4 (+4), running: 40 (-4), finished: 44 (+4), retry: 0 (+0), failed: 0 (+0)
+going to submit 4 htcondor job(s)
+submitted 4 htcondor job(s)
+22:15:46: all: 3339, unsubmitted: 3247 (-4), pending: 0 (-4), running: 46 (+6), finished: 46 (+2), retry: 0 (+0), failed: 0 (+0)
+going to submit 2 htcondor job(s)
+submitted 2 htcondor job(s)
+22:15:59: all: 3339, unsubmitted: 3245 (-2), pending: 0 (+0), running: 46 (+0), finished: 48 (+2), retry: 0 (+0), failed: 0 (+0)
+going to submit 2 htcondor job(s)
+submitted 2 htcondor job(s)
+22:16:13: all: 3339, unsubmitted: 3243 (-2), pending: 2 (+2), running: 33 (-13), finished: 61 (+13), retry: 0 (+0), failed: 0 (+0)
+going to submit 13 htcondor job(s)
+submitted 13 htcondor job(s)
+22:16:26: all: 3339, unsubmitted: 3230 (-13), pending: 0 (-2), running: 41 (+8), finished: 68 (+7), retry: 0 (+0), failed: 0 (+0)
+going to submit 7 htcondor job(s)
+submitted 7 htcondor job(s)
+22:16:39: all: 3339, unsubmitted: 3223 (-7), pending: 0 (+0), running: 45 (+4), finished: 71 (+3), retry: 0 (+0), failed: 0 (+0)
+going to submit 3 htcondor job(s)
+submitted 3 htcondor job(s)
+22:16:52: all: 3339, unsubmitted: 3220 (-3), pending: 3 (+3), running: 36 (-9), finished: 80 (+9), retry: 0 (+0), failed: 0 (+0)
+going to submit 9 htcondor job(s)
+submitted 9 htcondor job(s)
+22:17:05: all: 3339, unsubmitted: 3211 (-9), pending: 0 (-3), running: 44 (+8), finished: 84 (+4), retry: 0 (+0), failed: 0 (+0)
+going to submit 4 htcondor job(s)
+submitted 4 htcondor job(s)
+22:17:18: all: 3339, unsubmitted: 3207 (-4), pending: 0 (+0), running: 48 (+4), finished: 84 (+0), retry: 0 (+0), failed: 0 (+0)
+22:17:31: all: 3339, unsubmitted: 3207 (+0), pending: 0 (+0), running: 48 (+0), finished: 84 (+0), retry: 0 (+0), failed: 0 (+0)
+22:17:44: all: 3339, unsubmitted: 3207 (+0), pending: 0 (+0), running: 40 (-8), finished: 92 (+8), retry: 0 (+0), failed: 0 (+0)
+going to submit 8 htcondor job(s)
+submitted 8 htcondor job(s)
+22:17:57: all: 3339, unsubmitted: 3199 (-8), pending: 0 (+0), running: 48 (+8), finished: 92 (+0), retry: 0 (+0), failed: 0 (+0)
+22:18:10: all: 3339, unsubmitted: 3199 (+0), pending: 0 (+0), running: 48 (+0), finished: 92 (+0), retry: 0 (+0), failed: 0 (+0)
+22:18:23: all: 3339, unsubmitted: 3199 (+0), pending: 0 (+0), running: 48 (+0), finished: 92 (+0), retry: 0 (+0), failed: 0 (+0)
+22:18:36: all: 3339, unsubmitted: 3199 (+0), pending: 0 (+0), running: 42 (-6), finished: 98 (+6), retry: 0 (+0), failed: 0 (+0)
+going to submit 6 htcondor job(s)
+submitted 6 htcondor job(s)
+22:18:49: all: 3339, unsubmitted: 3193 (-6), pending: 0 (+0), running: 45 (+3), finished: 101 (+3), retry: 0 (+0), failed: 0 (+0)
+going to submit 3 htcondor job(s)
+submitted 3 htcondor job(s)
+22:19:02: all: 3339, unsubmitted: 3190 (-3), pending: 0 (+0), running: 47 (+2), finished: 102 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:19:15: all: 3339, unsubmitted: 3189 (-1), pending: 1 (+1), running: 47 (+0), finished: 102 (+0), retry: 0 (+0), failed: 0 (+0)
+22:19:28: all: 3339, unsubmitted: 3189 (+0), pending: 0 (-1), running: 46 (-1), finished: 104 (+2), retry: 0 (+0), failed: 0 (+0)
+going to submit 2 htcondor job(s)
+submitted 2 htcondor job(s)
+22:19:41: all: 3339, unsubmitted: 3187 (-2), pending: 0 (+0), running: 44 (-2), finished: 108 (+4), retry: 0 (+0), failed: 0 (+0)
+going to submit 4 htcondor job(s)
+submitted 4 htcondor job(s)
+22:19:54: all: 3339, unsubmitted: 3183 (-4), pending: 4 (+4), running: 43 (-1), finished: 109 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:20:07: all: 3339, unsubmitted: 3182 (-1), pending: 0 (-4), running: 48 (+5), finished: 109 (+0), retry: 0 (+0), failed: 0 (+0)
+22:20:20: all: 3339, unsubmitted: 3182 (+0), pending: 0 (+0), running: 48 (+0), finished: 109 (+0), retry: 0 (+0), failed: 0 (+0)
+22:20:33: all: 3339, unsubmitted: 3182 (+0), pending: 0 (+0), running: 48 (+0), finished: 109 (+0), retry: 0 (+0), failed: 0 (+0)
+22:20:45: all: 3339, unsubmitted: 3182 (+0), pending: 0 (+0), running: 47 (-1), finished: 110 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:20:59: all: 3339, unsubmitted: 3181 (-1), pending: 0 (+0), running: 47 (+0), finished: 111 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:21:12: all: 3339, unsubmitted: 3180 (-1), pending: 0 (+0), running: 43 (-4), finished: 116 (+5), retry: 0 (+0), failed: 0 (+0)
+going to submit 5 htcondor job(s)
+submitted 5 htcondor job(s)
+22:21:25: all: 3339, unsubmitted: 3175 (-5), pending: 5 (+5), running: 43 (+0), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:21:38: all: 3339, unsubmitted: 3175 (+0), pending: 0 (-5), running: 48 (+5), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:21:51: all: 3339, unsubmitted: 3175 (+0), pending: 0 (+0), running: 48 (+0), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:22:03: all: 3339, unsubmitted: 3175 (+0), pending: 0 (+0), running: 48 (+0), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:22:16: all: 3339, unsubmitted: 3175 (+0), pending: 0 (+0), running: 48 (+0), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:22:29: all: 3339, unsubmitted: 3175 (+0), pending: 0 (+0), running: 48 (+0), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:22:41: all: 3339, unsubmitted: 3175 (+0), pending: 0 (+0), running: 48 (+0), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:22:54: all: 3339, unsubmitted: 3175 (+0), pending: 0 (+0), running: 48 (+0), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:23:07: all: 3339, unsubmitted: 3175 (+0), pending: 0 (+0), running: 48 (+0), finished: 116 (+0), retry: 0 (+0), failed: 0 (+0)
+22:23:20: all: 3339, unsubmitted: 3175 (+0), pending: 0 (+0), running: 42 (-6), finished: 122 (+6), retry: 0 (+0), failed: 0 (+0)
+going to submit 6 htcondor job(s)
+submitted 6 htcondor job(s)
+22:23:33: all: 3339, unsubmitted: 3169 (-6), pending: 0 (+0), running: 46 (+4), finished: 124 (+2), retry: 0 (+0), failed: 0 (+0)
+going to submit 2 htcondor job(s)
+submitted 2 htcondor job(s)
+22:23:47: all: 3339, unsubmitted: 3167 (-2), pending: 0 (+0), running: 47 (+1), finished: 125 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:24:00: all: 3339, unsubmitted: 3166 (-1), pending: 1 (+1), running: 46 (-1), finished: 126 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:24:13: all: 3339, unsubmitted: 3165 (-1), pending: 0 (-1), running: 47 (+1), finished: 127 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:24:26: all: 3339, unsubmitted: 3164 (-1), pending: 0 (+0), running: 48 (+1), finished: 127 (+0), retry: 0 (+0), failed: 0 (+0)
+22:24:39: all: 3339, unsubmitted: 3164 (+0), pending: 0 (+0), running: 46 (-2), finished: 129 (+2), retry: 0 (+0), failed: 0 (+0)
+going to submit 2 htcondor job(s)
+submitted 2 htcondor job(s)
+22:24:52: all: 3339, unsubmitted: 3162 (-2), pending: 0 (+0), running: 45 (-1), finished: 132 (+3), retry: 0 (+0), failed: 0 (+0)
+going to submit 3 htcondor job(s)
+submitted 3 htcondor job(s)
+22:25:05: all: 3339, unsubmitted: 3159 (-3), pending: 0 (+0), running: 48 (+3), finished: 132 (+0), retry: 0 (+0), failed: 0 (+0)
+22:25:18: all: 3339, unsubmitted: 3159 (+0), pending: 0 (+0), running: 48 (+0), finished: 132 (+0), retry: 0 (+0), failed: 0 (+0)
+22:25:30: all: 3339, unsubmitted: 3159 (+0), pending: 0 (+0), running: 48 (+0), finished: 132 (+0), retry: 0 (+0), failed: 0 (+0)
+22:25:43: all: 3339, unsubmitted: 3159 (+0), pending: 0 (+0), running: 45 (-3), finished: 135 (+3), retry: 0 (+0), failed: 0 (+0)
+going to submit 3 htcondor job(s)
+submitted 3 htcondor job(s)
+22:25:56: all: 3339, unsubmitted: 3156 (-3), pending: 0 (+0), running: 48 (+3), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:26:09: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 48 (+0), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:26:22: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 48 (+0), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:26:35: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 48 (+0), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:26:47: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 48 (+0), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:27:00: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 48 (+0), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:27:13: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 48 (+0), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:27:26: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 48 (+0), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:27:38: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 48 (+0), finished: 135 (+0), retry: 0 (+0), failed: 0 (+0)
+22:27:51: all: 3339, unsubmitted: 3156 (+0), pending: 0 (+0), running: 47 (-1), finished: 136 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:28:04: all: 3339, unsubmitted: 3155 (-1), pending: 0 (+0), running: 38 (-9), finished: 146 (+10), retry: 0 (+0), failed: 0 (+0)
+going to submit 10 htcondor job(s)
+submitted 10 htcondor job(s)
+22:28:18: all: 3339, unsubmitted: 3145 (-10), pending: 0 (+0), running: 41 (+3), finished: 153 (+7), retry: 0 (+0), failed: 0 (+0)
+going to submit 7 htcondor job(s)
+submitted 7 htcondor job(s)
+22:28:31: all: 3339, unsubmitted: 3138 (-7), pending: 7 (+7), running: 36 (-5), finished: 158 (+5), retry: 0 (+0), failed: 0 (+0)
+going to submit 5 htcondor job(s)
+submitted 5 htcondor job(s)
+22:28:44: all: 3339, unsubmitted: 3133 (-5), pending: 0 (-7), running: 48 (+12), finished: 158 (+0), retry: 0 (+0), failed: 0 (+0)
+22:28:57: all: 3339, unsubmitted: 3133 (+0), pending: 0 (+0), running: 38 (-10), finished: 168 (+10), retry: 0 (+0), failed: 0 (+0)
+going to submit 10 htcondor job(s)
+submitted 10 htcondor job(s)
+22:29:10: all: 3339, unsubmitted: 3123 (-10), pending: 10 (+10), running: 38 (+0), finished: 168 (+0), retry: 0 (+0), failed: 0 (+0)
+22:29:22: all: 3339, unsubmitted: 3123 (+0), pending: 0 (-10), running: 48 (+10), finished: 168 (+0), retry: 0 (+0), failed: 0 (+0)
+22:29:35: all: 3339, unsubmitted: 3123 (+0), pending: 0 (+0), running: 48 (+0), finished: 168 (+0), retry: 0 (+0), failed: 0 (+0)
+22:29:48: all: 3339, unsubmitted: 3123 (+0), pending: 0 (+0), running: 48 (+0), finished: 168 (+0), retry: 0 (+0), failed: 0 (+0)
+22:30:01: all: 3339, unsubmitted: 3123 (+0), pending: 0 (+0), running: 48 (+0), finished: 168 (+0), retry: 0 (+0), failed: 0 (+0)
+22:30:14: all: 3339, unsubmitted: 3123 (+0), pending: 0 (+0), running: 47 (-1), finished: 169 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:30:27: all: 3339, unsubmitted: 3122 (-1), pending: 0 (+0), running: 47 (+0), finished: 170 (+1), retry: 0 (+0), failed: 0 (+0)
+going to submit 1 htcondor job(s)
+submitted 1 htcondor job(s)
+22:30:40: all: 3339, unsubmitted: 3121 (-1), pending: 1 (+1), running: 43 (-4), finished: 174 (+4), retry: 0 (+0), failed: 0 (+0)
+going to submit 4 htcondor job(s)
+submitted 4 htcondor job(s)
+22:30:53: all: 3339, unsubmitted: 3117 (-4), pending: 0 (-1), running: 48 (+5), finished: 174 (+0), retry: 0 (+0), failed: 0 (+0)
+

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-MODEL_ID=3nnukeuk
+MODEL_ID=vitziyqp
+# vitziyqp 10k:1 CE + SNR and Mass Model
 # ggsu6e9m is the 10:1 CE Linoss model
 # 3nnukeuk is the 10:1 CE + SNR and Mass Linoss model
 
@@ -8,7 +9,9 @@ echo "Starting Aframe run for model ID: ${MODEL_ID}"
 
 # Export environment variables
 export AFRAME_TEST_BACKGROUND_DIR=/home/barmstrong/aframe_new/data/bns/background_data
-export AFRAME_TEST_WAVEFORMS_DIR=/home/barmstrong/aframe_new/data/bns/aframe_
+export AFRAME_TRAIN_BACKGROUND_DIR=/home/barmstrong/aframe_new/data/bns/background_data
+export AFRAME_TRAIN_WAVEFORMS_DIR=/home/barmstrong/aframe_new/data/bns/aframe_train_
+export AFRAME_TEST_WAVEFORMS_DIR=/home/barmstrong/aframe_new/data/bns/aframe
 export AFRAME_CONTAINER_ROOT=/fast/barmstrong/container/aframe
 
 BASE_DIR=/fast/barmstrong/aframe_results/runs/${MODEL_ID}
@@ -29,8 +32,8 @@ mkdir -p ${AFRAME_RESULTS_DIR}
 # PATH=/usr/bin:$PATH LAW_CONFIG_FILE=/lustre/home/barmstrong/aframe_new/runs/base.cfg uv run --directory /lustre/home/barmstrong/aframe_new law run aframe.pipelines.sandbox.Sandbox --dev --train-task Infer  #--print-status -1 # --print-deps -1
 
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
-PATH=/usr/bin:$PATH LAW_CONFIG_FILE=/lustre/home/barmstrong/aframe_new/runs/base.cfg uv run --directory /lustre/home/barmstrong/aframe_new law run aframe.tasks.data.TrainingWaveforms --dev --log-level DEBUG #--print-status -1 # --print-deps -1
-#PATH=/usr/bin:$PATH LAW_CONFIG_FILE=/lustre/home/barmstrong/aframe_new/runs/base.cfg uv run --directory /lustre/home/barmstrong/aframe_new law run aframe.tasks.infer.Infer --dev --gpus 0,1,2,3,4,5,6 --train-task Infer --log-level DEBUG #--print-status -1 # --print-deps -1
+# PATH=/usr/bin:$PATH LAW_CONFIG_FILE=/lustre/home/barmstrong/aframe_new/runs/base.cfg uv run --directory /lustre/home/barmstrong/aframe_new law run aframe.tasks.data.ValidationWaveforms --dev --log-level DEBUG #--print-status -1 # --print-deps -1
+PATH=/usr/bin:$PATH LAW_CONFIG_FILE=/lustre/home/barmstrong/aframe_new/runs/base.cfg uv run --directory /lustre/home/barmstrong/aframe_new law run aframe.tasks.infer.Infer --dev --gpus 0,1,2,3,4,5,6,7 --train-task Infer --log-level DEBUG #--print-status -1 # --print-deps -1
 # PATH=/usr/bin:$PATH LAW_CONFIG_FILE=/lustre/home/barmstrong/aframe_new/runs/base.cfg uv run --directory /lustre/home/barmstrong/aframe_new law run aframe.tasks.infer.Infer --gpus 0,1,2,3,4,5,6 --dev --train-task Infer --log-level DEBUG #--print-status -1 # --print-deps -1
 
 # PATH=/usr/bin:$PATH LAW_CONFIG_FILE=/lustre/home/barmstrong/aframe_new/runs/base.cfg uv run --directory /lustre/home/barmstrong/aframe_new law run aframe.pipelines.sandbox.Sandbox --dev --train-task Infer  #--print-status -1 # --print-deps -1

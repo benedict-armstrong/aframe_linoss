@@ -5,11 +5,11 @@ wandb:
 mode: all
 test:
   output_path: outputs/results
-  batch_size: 128
+  batch_size: 256
 dataset:
   train:
-    name: on_the_fly
-    root_path: data/bns/on_the_fly
+    name: bns_classification
+    root_path: data/bns
     shuffle: true
     num_workers: 20
     window: ${dataset.window}
@@ -29,8 +29,8 @@ dataset:
     targets: ${dataset.targets}
     window: ${dataset.window}
   window:
-  - -10192
-  - -2000
+  - -9992
+  - -1800
   name: ${dataset.train.name}
   targets:
   - snr
@@ -42,7 +42,7 @@ train:
     name: warmup_cosine_decay_schedule
     init_value: 1.0e-05
     peak_value: 5.0e-05
-    warmup_steps: 1
+    warmup_steps: 500
     decay_steps: ${train.max_steps}
     end_value: 1.0e-05
   min_steps: 100000
@@ -74,6 +74,7 @@ model:
         weight: 0.05
     label:
       name: classification
+      reduce_time: mean
       metrics:
       - accuracy
       - auc_roc
@@ -85,11 +86,12 @@ model:
       - classification_visualization
       - accuracy_pos_class
       - accuracy_neg_class
+      - true_vs_false_distribution
       - decision_threshold_vs_detected_events
       loss_fns:
       - name: cross_entropy
         cls_weights:
-        - 10.0
+        - 100.0
         - 1.0
     mass_params:
       name: regression
@@ -117,7 +119,6 @@ model:
       dim: 64
       theta_max: 3.141592653589793
       r_min: 0.9
-      num_As: 1
   use_dain: true
   encoder:
     name: composite
