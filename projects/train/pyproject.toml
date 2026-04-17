@@ -35,6 +35,7 @@ dependencies = [
 
 [project.scripts]
 train = "train.cli:main"
+regression-infer = "train.regression_infer:cli"
 
 [project.optional-dependencies]
 jax = [
