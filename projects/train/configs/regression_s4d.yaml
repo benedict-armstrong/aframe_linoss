@@ -1,0 +1,220 @@
+seed_everything: 20260422
+
+# =========================
+# Trainer
+# =========================
+trainer:
+  accelerator: gpu
+  strategy: auto
+  devices: auto
+  num_nodes: 1
+  precision: null
+
+  max_epochs: 3000
+  min_epochs: 60
+  check_val_every_n_epoch: 1
+  log_every_n_steps: 10
+  enable_progress_bar: true
+
+  logger:
+    - class_path: train.callbacks.AframeWandbLogger
+      init_args:
+        name: chirp_mass_1s_d64_s64_l4
+        save_dir: logs
+        project: aframe
+        id: chirp_mass_snr_8_50_59-60s_d64_s64_l4
+
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        monitor: val/gaussnll
+        mode: min
+        save_top_k: 1
+        save_last: true
+        filename: 's4d_chirp_mass_gaussnll_{epoch:02d}'
+        auto_insert_metric_name: false
+
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        monitor: val/mse/out_0
+        mode: min
+        save_top_k: 3
+        filename: 's4d_chirp_mass_mse_{epoch:02d}'
+        auto_insert_metric_name: false
+
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val/mse/out_0
+        mode: min
+        patience: 20
+        verbose: true
+
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: epoch
+
+    - class_path: train.utils.samples_per_second.SamplesPerSecondTimer
+    - class_path: train.utils.data_wait_timer.DataWaitTimer
+
+# =========================
+# Model
+# =========================
+model:
+  class_path: train.model.regression.LitS4DGaussianNLL
+  init_args:
+    d_input: 2          # H1, L1
+    d_output: 2         # chirp_mass mean + chirp_mass var
+    normalize_input: true
+    y_mean: [1.2]      # center of chirp_mass prior [0.87, 2.22]
+    y_std: [0.35]      # ~std of uniform [0.87, 2.22]
+    d_model: 64
+    d_state: 64
+    n_layers: 4
+    dropout: 0.2
+    lr: 1e-3
+    dt_min: 1.0e-3
+    dt_max: 5
+    base_lr: 5.0e-5
+    weight_decay: 0.0
+    beta_nll: 0.3
+    lambda_spread: 0.3
+    lr_scheduler:
+      class_path: train.model.regression.WarmupCosineAnnealingWarmRestarts
+      init_args:
+        warmup_epochs: 5
+        T_0: 10
+        T_mult: 2
+        eta_min: 1.0e-7
+        warmup_start_factor: 1.0e-2
+    lr_scheduler_interval: epoch
+
+# =========================
+# Data
+# =========================
+data:
+  class_path: train.data.regression.RegressionTimeDomainDataset
+  init_args:
+    background_dir: /n/holystore01/LABS/iaifi_lab/Lab/kyoon/DATA/O3a_H1_L1_4096Hz
+    ifos: [H1, L1]
+    sample_rate: 512
+    kernel_length: 1.0
+    left_pad: 0.5      # ~0.5s jitter; must satisfy left_pad + right_pad < kernel_length=1.0
+    right_pad: 0.0
+    fduration: 1.0
+    psd_length: 20.0
+    fftlength: 2.0
+    highpass: 20.0
+    max_num_workers: 8
+    waveform_prob: 1.0
+    target_parameters: [chirp_mass]
+    prefetch_factor: 2
+    persistent_workers: true
+    batch_size: 128
+    batches_per_epoch: 782
+    snr_sampler:
+      class_path: train.augmentations.SnrSampler
+      init_args:
+        max_min_snr: 30.0
+        min_min_snr: 4.0
+        max_snr: 50.0
+        alpha: -0.01    # near-flat; alpha=0 not supported by PowerLaw
+        decay_steps: 100000
+    waveform_sampler:
+      class_path: train.data.waveforms.generator.cbc_regression.RegressionCBCGenerator
+      init_args:
+        ifos: [H1, L1]
+        sample_rate: 256
+        # val_waveform_file: /path/to/val_waveforms.hdf5
+        approximant:
+          class_path: ml4gw.waveforms.IMRPhenomPv2
+        duration: 64.0    # total waveform; coal at 64 - right_pad = 63s
+        right_pad: 1.0    # 1s post-coal silence → coal at 63s
+        window_offset: 3.0 # shift signal_idx 3s before coal → model sees [59s, 60s]
+        f_min: 20.0
+        f_ref: 50.0
+        training_prior:
+          class_path: train.prior.AframePrior
+          init_args:
+            conversion_function: train.conversion.precessing_to_lalsimulation_parameters
+            priors:
+              chirp_mass:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.87
+                  high: 2.22
+                  validate_args: false
+              mass_ratio:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.4
+                  high: 1.0
+                  validate_args: false
+              a_1:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.0
+                  high: 0.4
+                  validate_args: false
+              a_2:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.0
+                  high: 0.4
+                  validate_args: false
+              tilt_1:
+                class_path: ml4gw.distributions.Sine
+                init_args:
+                  low: 0.0
+                  high: 3.14159
+                  validate_args: false
+              tilt_2:
+                class_path: ml4gw.distributions.Sine
+                init_args:
+                  low: 0.0
+                  high: 3.14159
+                  validate_args: false
+              phi_12:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.0
+                  high: 6.28318
+                  validate_args: false
+              phi_jl:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.0
+                  high: 6.28318
+                  validate_args: false
+              inclination:
+                class_path: ml4gw.distributions.Sine
+                init_args:
+                  low: 0.0
+                  high: 3.14159
+                  validate_args: false
+              phic:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.0
+                  high: 6.28318
+                  validate_args: false
+              distance:
+                class_path: ml4gw.distributions.UniformComovingVolume
+                init_args:
+                  minimum: 10
+                  maximum: 500
+                  distance_type: luminosity_distance
+                  validate_args: false
+    dec:
+      class_path: ml4gw.distributions.Cosine
+    psi:
+      class_path: torch.distributions.Uniform
+      init_args:
+        low: 0.0
+        high: 3.14159
+        validate_args: false
+    phi:
+      class_path: torch.distributions.Uniform
+      init_args:
+        low: 0.0
+        high: 6.28318
+        validate_args: false

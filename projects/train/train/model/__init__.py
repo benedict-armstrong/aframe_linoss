@@ -6,3 +6,4 @@ from .supervised import (
     SupervisedMultiModalAframe,
     SupervisedTimeSpectrogramAframe,
 )
+from .regression import LitS4DGaussianNLL, LitLinOSSGaussianNLL

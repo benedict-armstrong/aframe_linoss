@@ -1,4 +1,8 @@
 **/__pycache__
+**/*.sif
+**/*.cfg
+**/*.ckpt
+**/*.slurm
 **/.ipynb_checkpoints
 **/*.log
 **/*.env
@@ -6,3 +10,10 @@
 **/id_rsa
 **/*.hdf5
 **/*.ipynb
+
+# SLURM logs
+logs/
+runs/
+
+# Weights & Biases
+wandb/

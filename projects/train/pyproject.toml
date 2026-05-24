@@ -31,10 +31,14 @@ dependencies = [
     "filelock>=3.13.1,<4",
     "s3fs>=2024,<2025",
     "lightray>=0.2.3",
+    "equinox>=0.13.0",
+    "jax[cuda12]>=0.5.3",
+    "optax>=0.2.8",
 ]
 
 [project.scripts]
 train = "train.cli:main"
+regression-infer = "train.regression_infer:cli"
 
 [project.optional-dependencies]
 jax = [

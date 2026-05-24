@@ -27,7 +27,7 @@ class WaveformSampler(torch.nn.Module):
         *args,
         ifos: List[str],
         sample_rate: float,
-        val_waveform_file: Path,
+        val_waveform_file: Path | None = None,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -35,9 +35,15 @@ class WaveformSampler(torch.nn.Module):
         self.sample_rate = sample_rate
         self.val_waveform_file = val_waveform_file
 
-        waveform_set = self.waveform_set_cls.read(val_waveform_file)
-        self.num_val_waveforms = len(waveform_set)
-        self.right_pad = waveform_set.right_pad
+        self.num_val_waveforms = 0
+        self.right_pad = 0
+        if val_waveform_file is not None:
+            try:
+                waveform_set = self.waveform_set_cls.read(val_waveform_file)
+                self.num_val_waveforms = len(waveform_set)
+                self.right_pad = waveform_set.right_pad
+            except Exception:
+                pass
 
     @property
     def waveform_set_cls(self):

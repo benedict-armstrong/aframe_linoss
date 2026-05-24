@@ -1,0 +1,142 @@
+model:
+  class_path: train.model.regression.LitLinOSSGaussianNLL
+  init_args:
+    d_input: 2          # H1, L1
+    d_output: 2         # chirp_mass mean + chirp_mass sigma
+    d_model: 128
+    ssm_size: 64
+    n_layers: 4
+    dropout: 0.0
+    discretization: IM
+    learning_rate: 1.0e-3
+    weight_decay: 0.0
+    warmup_steps: 1000
+
+data:
+  class_path: train.data.regression.RegressionTimeDomainDataset
+  init_args:
+    # background_dir: /path/to/train_background
+    ifos: [H1, L1]
+    sample_rate: 256
+    # 4-second window ending 60 s before merger
+    kernel_length: 4.0
+    fduration: 1.0
+    psd_length: 20.0
+    fftlength: 2.0
+    highpass: 32.0
+    waveform_prob: 1.0
+    target_parameters: [chirp_mass]
+    batch_size: 128
+    batches_per_epoch: 2000
+    snr_sampler:
+      class_path: train.augmentations.SnrSampler
+      init_args:
+        max_min_snr: 30.0
+        min_min_snr: 8.0
+        max_snr: 100.0
+        alpha: -3.0
+        decay_steps: 100000
+    # CBCGenerator: no pre-generated training waveforms needed.
+    # val_waveform_file must be pre-generated with right_pad=60, duration=64.
+    waveform_sampler:
+      class_path: train.data.waveforms.generator.cbc.CBCGenerator
+      init_args:
+        ifos: [H1, L1]
+        sample_rate: 256
+        # val_waveform_file: /path/to/val_waveforms.hdf5
+        approximant:
+          class_path: ml4gw.waveforms.IMRPhenomD
+        duration: 64.0    # must cover kernel_length + right_pad
+        f_min: 20.0
+        f_ref: 40.0
+        training_prior:
+          class_path: train.prior.AframePrior
+          init_args:
+            conversion_function: train.conversion.aligned_to_lalsimulation_parameters
+            priors:
+              chirp_mass:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 1.0
+                  high: 1.8
+                  validate_args: false
+              mass_ratio:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.125
+                  high: 1.0
+                  validate_args: false
+              chi1:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: -0.05
+                  high: 0.05
+                  validate_args: false
+              chi2:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: -0.05
+                  high: 0.05
+                  validate_args: false
+              distance:
+                class_path: ml4gw.distributions.UniformComovingVolume
+                init_args:
+                  minimum: 10
+                  maximum: 500
+                  distance_type: luminosity_distance
+                  validate_args: false
+              inclination:
+                class_path: ml4gw.distributions.Sine
+                init_args:
+                  low: 0.0
+                  high: 3.14159
+                  validate_args: false
+              phic:
+                class_path: torch.distributions.Uniform
+                init_args:
+                  low: 0.0
+                  high: 6.28318
+                  validate_args: false
+    dec:
+      class_path: ml4gw.distributions.Cosine
+    psi:
+      class_path: torch.distributions.Uniform
+      init_args:
+        low: 0.0
+        high: 3.14159
+        validate_args: false
+    phi:
+      class_path: torch.distributions.Uniform
+      init_args:
+        low: 0.0
+        high: 6.28318
+        validate_args: false
+
+trainer:
+  accelerator: gpu
+  devices: 1
+  max_epochs: 200
+  check_val_every_n_epoch: 1
+  log_every_n_steps: 20
+  benchmark: true
+  logger:
+    - class_path: train.callbacks.AframeWandbLogger
+      init_args:
+        name: regression_linoss
+        save_dir: logs
+        project: aframe
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val/gaussnll
+        mode: min
+        patience: 50
+    - class_path: train.callbacks.ModelCheckpoint
+      init_args:
+        monitor: val/gaussnll
+        mode: min
+        save_top_k: 1
+        save_last: true
+        auto_insert_metric_name: false
+    - class_path: train.utils.samples_per_second.SamplesPerSecondTimer
+    - class_path: train.utils.data_wait_timer.DataWaitTimer

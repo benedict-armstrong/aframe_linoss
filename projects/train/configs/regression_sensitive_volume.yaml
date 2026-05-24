@@ -1,0 +1,31 @@
+checkpoint: 
+model_class: LitS4DGaussianNLL
+
+background_dir: 
+injection_set_fname: 
+
+ifos: [H1, L1]
+
+# 4 time shifts × 1.64 days O3a ≈ 6.6 days background
+shifts:
+  - [0, 1]
+  - [0, 2]
+  - [0, 3]
+  - [0, 4]
+
+# Signal properties — must match BNSReg training data
+sample_rate: 256
+raw_sample_rate: 4096
+kernel_length: 4.0
+fduration: 1.0
+psd_length: 64.0
+fftlength: 2.0
+highpass: 20.0
+
+inference_sampling_rate: 8.0
+integration_window_length: 1.0
+cluster_window_length: 0.5
+
+batch_size: 256
+device: cuda
+outdir:
