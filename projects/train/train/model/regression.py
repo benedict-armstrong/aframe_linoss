@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -374,4 +376,285 @@ class RegressionAframeS4D(RegressionAframe):
                 "scheduler": scheduler,
                 "interval": hp.lr_scheduler_interval,
             },
+        }
+
+
+class JaxRegressionAframe(AframeBase):
+    """LinOSS (JAX/equinox) regression model trained with BetaNLL loss.
+
+    Uses optax for optimization (``automatic_optimization=False``) since
+    JAX models cannot be differentiated through PyTorch autograd.
+
+    Pass a pre-built ``RegressionTimeDomainLinOSS`` (or any ``JaxArchitecture``
+    whose ``__call__`` returns ``(outputs, state)`` with ``outputs`` shape
+    ``(d_output,)`` per sample) as ``arch``.
+    """
+
+    def __init__(
+        self,
+        arch,
+        d_output: int,
+        metric: TimeSlideAUROC,
+        learning_rate: float = 1e-4,
+        weight_decay: float = 0.0,
+        warmup_steps: int = 1000,
+        max_steps: int = 500_000,
+        clip_grad_norm: float = 10.0,
+        beta_nll: float = 0.5,
+        lambda_spread: float = 0.0,
+        y_mean: list[float] | None = None,
+        y_std: list[float] | None = None,
+        normalize_input: bool = False,
+        seed: int = 42,
+    ) -> None:
+        import equinox as eqx
+        import jax
+        import jax.numpy as jnp
+        import jax.random as jr
+        import optax
+        from architectures.base import Architecture
+
+        super().__init__(arch=Architecture())  # dummy PyTorch module
+        self.automatic_optimization = False
+        self.metric = metric
+
+        if d_output % 2 != 0:
+            raise ValueError(
+                f"d_output={d_output} must be even (n_vars means + n_vars log-vars)."
+            )
+        self.n_vars = d_output // 2
+        self.beta_nll_coef = beta_nll
+        self.lambda_spread = lambda_spread
+        self.normalize_input = normalize_input
+        self.save_hyperparameters(ignore=["arch", "metric"])
+
+        # JAX model + equinox state
+        self.jax_model = arch
+        self.jax_model_state = eqx.nn.State(self.jax_model)
+        self.jax_model_filter_spec = jax.tree_util.tree_map(
+            eqx.is_inexact_array, self.jax_model
+        )
+
+        # optax optimizer: warmup → cosine decay
+        scheduler = optax.warmup_cosine_decay_schedule(
+            init_value=0.0,
+            peak_value=learning_rate,
+            warmup_steps=warmup_steps,
+            decay_steps=max_steps,
+            end_value=learning_rate * 0.01,
+        )
+        self.optimizer = optax.chain(
+            optax.clip_by_global_norm(clip_grad_norm),
+            optax.inject_hyperparams(optax.adamw)(
+                learning_rate=scheduler, weight_decay=weight_decay
+            ),
+        )
+        diff_model, _ = eqx.partition(self.jax_model, self.jax_model_filter_spec)
+        self.opt_state = self.optimizer.init(diff_model)
+
+        self.y_mean = torch.tensor(
+            y_mean if y_mean is not None else [0.0] * self.n_vars,
+            dtype=torch.float32,
+        )
+        self.y_std = torch.tensor(
+            y_std if y_std is not None else [1.0] * self.n_vars,
+            dtype=torch.float32,
+        )
+        self.rng_key = jr.PRNGKey(seed)
+
+    def configure_optimizers(self):
+        pass  # optax manages all optimisation
+
+    def _to_jax(self, t: torch.Tensor):
+        import jax.numpy as jnp
+        return jnp.asarray(t.cpu().numpy())
+
+    def _normalize_target(self, cm):
+        import jax.numpy as jnp
+        mean = jnp.array(self.y_mean.numpy())
+        std = jnp.array(self.y_std.numpy())
+        return (cm - mean) / std
+
+    @staticmethod
+    def _chirp_mass_jax(m1, m2):
+        return (m1 * m2) ** (3 / 5) / (m1 + m2) ** (1 / 5)
+
+    def training_step(self, batch, batch_idx):
+        import jax.numpy as jnp
+        import jax.random as jr
+        from train.utils.jax.training import jax_apply_regression_training_step
+
+        X, _, params = batch
+        X_j = self._to_jax(X)
+        if self.normalize_input:
+            X_j = X_j / jnp.std(X_j, axis=-1, keepdims=True).clip(1e-8)
+
+        cm = self._chirp_mass_jax(
+            self._to_jax(params["mass_1"]), self._to_jax(params["mass_2"])
+        )
+        cm_norm = self._normalize_target(cm).reshape(-1, self.n_vars)
+
+        self.rng_key, k = jr.split(self.rng_key)
+        keys = jr.split(k, X_j.shape[0])
+
+        (
+            self.jax_model,
+            self.jax_model_state,
+            self.opt_state,
+            metrics,
+        ) = jax_apply_regression_training_step(
+            self.jax_model,
+            self.jax_model_filter_spec,
+            self.jax_model_state,
+            X_j,
+            cm_norm,
+            float(self.beta_nll_coef),
+            float(self.lambda_spread),
+            self.opt_state,
+            self.optimizer.update,
+            keys,
+        )
+
+        loss = float(metrics["loss"])
+        nll = float(metrics["nll"])
+        spread = float(metrics["spread"])
+        var_np = np.array(metrics["var"])  # (B, n_vars)
+
+        self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True, sync_dist=True)
+        self.log("train/gaussnll", nll, on_step=False, on_epoch=True)
+        self.log("train/spread_penalty", spread, on_step=False, on_epoch=True)
+        for i in range(self.n_vars):
+            self.log(
+                f"train/sigma_{i}",
+                float(np.sqrt(var_np[:, i].mean())),
+                on_step=False,
+                on_epoch=True,
+            )
+        self.log(
+            "train/lr",
+            float(self.opt_state[1].hyperparams["learning_rate"]),
+            on_step=True,
+            on_epoch=True,
+        )
+
+        # Keep Lightning's manual-optimisation bookkeeping happy
+        optimizers = self.optimizers()
+        if isinstance(optimizers, (list, tuple)):
+            for opt in optimizers:
+                opt.step()
+        elif optimizers is not None:
+            optimizers.step()
+
+        return torch.tensor(0.0)
+
+    def _jax_inference(self, X: torch.Tensor) -> np.ndarray:
+        """JAX inference → numpy array (B, d_output)."""
+        import jax.numpy as jnp
+        import jax.random as jr
+        from train.utils.jax.training import jax_inference
+
+        X_j = self._to_jax(X)
+        if self.normalize_input:
+            X_j = X_j / jnp.std(X_j, axis=-1, keepdims=True).clip(1e-8)
+        self.rng_key, k = jr.split(self.rng_key)
+        keys = jr.split(k, X_j.shape[0])
+        outputs, new_state = jax_inference(
+            self.jax_model, X_j, self.jax_model_state, keys
+        )
+        self.jax_model_state = new_state
+        return np.array(outputs, copy=True)
+
+    def score(self, X: torch.Tensor) -> torch.Tensor:
+        """Detection score: negative mean predicted variance."""
+        outputs = self._jax_inference(X)  # (B, d_output)
+        var_pre = outputs[:, self.n_vars:]
+        var = np.log1p(np.exp(var_pre))  # softplus in numpy
+        return torch.tensor(-var.mean(axis=-1))
+
+    def validation_step(self, batch, batch_idx):
+        shift, X_bg, X_sig, params = batch
+
+        y_bg = self.score(X_bg)
+
+        cm_torch = (
+            (params["mass_1"] * params["mass_2"]) ** (3 / 5)
+            / (params["mass_1"] + params["mass_2"]) ** (1 / 5)
+        ).cpu()
+
+        n_views = X_sig.shape[0]
+        all_nll, all_mean_norm, all_var, all_scores_fg = [], [], [], []
+
+        for i in range(n_views):
+            outputs = self._jax_inference(X_sig[i])  # (B, d_output) numpy
+            mean_np = outputs[:, : self.n_vars]
+            var_pre_np = outputs[:, self.n_vars :]
+            var_np = np.log1p(np.exp(var_pre_np))  # softplus
+
+            cm_norm_np = np.array(
+                self._normalize_target(
+                    self._to_jax(cm_torch).reshape(-1, self.n_vars)
+                )
+            )
+            nll_val = float(
+                np.mean(0.5 * (np.log(var_np) + (cm_norm_np - mean_np) ** 2 / var_np))
+            )
+            all_nll.append(nll_val)
+            all_mean_norm.append(mean_np)
+            all_var.append(var_np)
+            all_scores_fg.append(-var_np.mean(axis=-1))
+
+        y_fg = torch.tensor(np.stack(all_scores_fg).mean(axis=0))
+        self.metric.update(shift, y_bg, y_fg)
+        self.log(
+            "val/valid_auroc",
+            self.metric,
+            on_step=True,
+            on_epoch=True,
+            sync_dist=True,
+        )
+
+        nll = float(np.mean(all_nll))
+        var_stack = np.stack(all_var).mean(axis=0)        # (B, n_vars)
+        mean_norm_views = np.stack(all_mean_norm)          # (n_views, B, n_vars)
+        mean_norm_stack = mean_norm_views.mean(axis=0)     # (B, n_vars)
+        view_variance = np.var(mean_norm_views, axis=0, ddof=0)  # (B, n_vars)
+
+        cm_norm_np = np.array(
+            self._normalize_target(
+                self._to_jax(cm_torch).reshape(-1, self.n_vars)
+            )
+        )
+
+        self.log("val/gaussnll", nll, on_step=False, on_epoch=True, prog_bar=True)
+        for i in range(self.n_vars):
+            mse_i = float(np.mean((mean_norm_stack[:, i] - cm_norm_np[:, i]) ** 2))
+            sigma_i = float(np.sqrt(var_stack[:, i].mean()))
+            self.log(f"val/mse/out_{i}", mse_i, on_step=False, on_epoch=True)
+            self.log(f"val/sigma_{i}", sigma_i, on_step=False, on_epoch=True)
+            self.log(
+                f"val/view_var/out_{i}",
+                float(view_variance[:, i].mean()),
+                on_step=False,
+                on_epoch=True,
+            )
+
+        mean_norm_t = torch.tensor(mean_norm_stack, dtype=torch.float32)
+        mean_phys = mean_norm_t * self.y_std + self.y_mean
+        cm_target = cm_torch.reshape_as(mean_phys)
+        rel_err = (mean_phys - cm_target).abs() / cm_target.abs().clamp(min=1e-8)
+        for pct in [1, 2, 5, 10]:
+            for i in range(self.n_vars):
+                self.log(
+                    f"val/within_{pct}pct/out_{i}",
+                    (rel_err[:, i] < pct / 100.0).float().mean(),
+                    on_step=False,
+                    on_epoch=True,
+                )
+
+        sigma_phys = torch.tensor(np.sqrt(var_stack), dtype=torch.float32) * self.y_std
+        return {
+            "targets": cm_torch.detach().cpu(),
+            "outputs": mean_phys.detach().cpu(),
+            "params": {"snr": params["snr"].detach().cpu()},
+            "all_outputs": {"chirp_mass_std": sigma_phys.detach().cpu()},
         }

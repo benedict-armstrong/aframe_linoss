@@ -586,6 +586,7 @@ class LinOSS(eqx.Module):
         resnet_norm_groups: int,
         mlp_width: int,
         mlp_depth: int,
+        d_output: int = 1,
         *,
         key: PRNGKeyArray,
     ):
@@ -616,7 +617,7 @@ class LinOSS(eqx.Module):
         )
         self.mlp = eqx.nn.MLP(
             in_size=resnet_latent_dim,
-            out_size=1,
+            out_size=d_output,
             width_size=mlp_width,
             depth=mlp_depth,
             key=k_mlp,

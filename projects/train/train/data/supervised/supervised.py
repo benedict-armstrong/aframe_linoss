@@ -20,7 +20,9 @@ class SupervisedAframeDataset(BaseAframeDataset):
             self.swapper = aug.ChannelSwapper(swap_prob)
             self.swap_prob = swap_prob
         elif swap_prob is not None:
-            raise ValueError(f"swap_prob must be between 0 and 1, got {swap_prob}")
+            raise ValueError(
+                f"swap_prob must be between 0 and 1, got {swap_prob}"
+            )
         else:
             self.swapper = None
             self.swap_prob = 0
@@ -29,7 +31,9 @@ class SupervisedAframeDataset(BaseAframeDataset):
             self.muter = aug.ChannelMuter(mute_prob)
             self.mute_prob = mute_prob
         elif mute_prob is not None:
-            raise ValueError(f"mute_frac must be between 0 and 1, got {mute_prob}")
+            raise ValueError(
+                f"mute_frac must be between 0 and 1, got {mute_prob}"
+            )
         else:
             self.muter = None
             self.mute_prob = 0
@@ -41,7 +45,9 @@ class SupervisedAframeDataset(BaseAframeDataset):
     @torch.no_grad()
     def inject(
         self, X, params, waveforms=None
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, dict[str, torch.Tensor]]:
+    ) -> tuple[
+        torch.Tensor, torch.Tensor, torch.Tensor, dict[str, torch.Tensor]
+    ]:
         if self.waveforms_from_disk and waveforms is None:
             raise ValueError(
                 "Waveforms should be passed to the `inject` method "
@@ -69,13 +75,17 @@ class SupervisedAframeDataset(BaseAframeDataset):
             N = mask.sum().item()
             idx = torch.randperm(waveforms.shape[0])[:N]
             waveforms = waveforms[idx].to(X.device).float()
-            params = {k: v[idx].to(X.device).float() for k, v in params.items()}
+            params = {
+                k: v[idx].to(X.device).float() for k, v in params.items()
+            }
             hc, hp = waveforms[:, 0], waveforms[:, 1]
         else:
             hc, hp = self.waveform_sampler.sample(X[mask])
 
         snrs = self.snr_sampler.sample((mask.sum().item(),)).to(X.device)
-        responses = self.projector(dec, psi, phi, snrs, psds[mask], cross=hc, plus=hp)
+        responses = self.projector(
+            dec, psi, phi, snrs, psds[mask], cross=hc, plus=hp
+        )
 
         params["dec"] = dec
         params["psi"] = psi
@@ -86,7 +96,9 @@ class SupervisedAframeDataset(BaseAframeDataset):
         # the waveforms already in `on_before_batch_transfer`
         if not self.waveforms_from_disk:
             responses = self.slice_waveforms(responses)
-        kernels = sample_kernels(responses, kernel_size=X.size(-1), coincident=True)
+        kernels = sample_kernels(
+            responses, kernel_size=X.size(-1), coincident=True
+        )
 
         # perform augmentations on the responses themselves,
         # keep track of which indices have been augmented

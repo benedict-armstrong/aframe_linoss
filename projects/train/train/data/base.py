@@ -193,7 +193,9 @@ class BaseAframeDataset(pl.LightningDataModule):
         highpass: Optional[float] = None,
         lowpass: Optional[float] = None,
         target_sample_rate: Optional[float] = None,
-        snr_sampler: Optional[Union[TransformedDist, Callable[[int], Tensor]]] = None,
+        snr_sampler: Optional[
+            Union[TransformedDist, Callable[[int], Tensor]]
+        ] = None,
         # validation args
         val_batch_size: Optional[int] = None,
         valid_stride: Optional[float] = None,
@@ -236,7 +238,9 @@ class BaseAframeDataset(pl.LightningDataModule):
 
         # generate our local node data directory
         # if our specified data source is remote
-        self.background_dir = fs_utils.get_data_dir(self.hparams.background_dir)
+        self.background_dir = fs_utils.get_data_dir(
+            self.hparams.background_dir
+        )
         self.waveforms_dir = fs_utils.get_data_dir(self.hparams.waveforms_dir)
         self.verbose = verbose
 
@@ -397,7 +401,9 @@ class BaseAframeDataset(pl.LightningDataModule):
     @property
     def num_workers(self):
         local_world_size = len(self.trainer.device_ids)
-        num_workers = min(self.max_num_workers, int(os.cpu_count() / local_world_size))
+        num_workers = min(
+            self.max_num_workers, int(os.cpu_count() / local_world_size)
+        )
         self._logger.info(f"Using {num_workers} workers for data loading")
         return num_workers
 
@@ -541,12 +547,14 @@ class BaseAframeDataset(pl.LightningDataModule):
             self.val_batch_size,
         )
 
-        self.val_waveforms, self.val_params = self.waveform_sampler.get_val_waveforms(
-            world_size, rank
+        self.val_waveforms, self.val_params = (
+            self.waveform_sampler.get_val_waveforms(world_size, rank)
         )
 
         if self.waveforms_from_disk:
-            self.waveform_sampler.get_train_waveforms(world_size, rank, self.device)
+            self.waveform_sampler.get_train_waveforms(
+                world_size, rank, self.device
+            )
         self._logger.info("Initial dataloading complete")
 
         # now define some of the augmentation transforms
@@ -606,7 +614,9 @@ class BaseAframeDataset(pl.LightningDataModule):
             # much data from CPU to GPU. Once everything is
             # on-device, pre-inject signals into background.
             shift = self.timeslides[timeslide_idx].shift_size
-            X_bg, X_fg, params = self.build_val_batches(background, signals, params)
+            X_bg, X_fg, params = self.build_val_batches(
+                background, signals, params
+            )
             batch = (shift, X_bg, X_fg, params)
         return batch
 
@@ -740,7 +750,9 @@ class BaseAframeDataset(pl.LightningDataModule):
         pin_memory = isinstance(
             self.trainer.accelerator, pl.accelerators.CUDAAccelerator
         )
-        self._logger.debug(f"Using {self.num_workers} workers for strain data loading")
+        self._logger.debug(
+            f"Using {self.num_workers} workers for strain data loading"
+        )
         dataloader = torch.utils.data.DataLoader(
             dataset,
             num_workers=self.num_workers,
@@ -766,7 +778,9 @@ class BaseAframeDataset(pl.LightningDataModule):
         # based on requested chunks per epoch and batches per epoch
         world_size, _ = self.get_world_size_and_rank()
         batches_per_epoch = self.hparams.batches_per_epoch // world_size
-        batches_per_chunk = int(batches_per_epoch // self.hparams.chunks_per_epoch) + 1
+        batches_per_chunk = (
+            int(batches_per_epoch // self.hparams.chunks_per_epoch) + 1
+        )
         self._logger.info(
             f"Training on pool of {waveform_loader.total} waveforms. "
             f"Sampling {batches_per_chunk} batches per chunk "

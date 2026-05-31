@@ -1,27 +1,39 @@
 model:
-  class_path: train.model.RegressionAframeS4D
+  class_path: train.model.JaxRegressionAframe
   init_args:
     arch:
-      class_path: architectures.networks.s4d.S4Model
+      class_path: architectures.regresssion.RegressionTimeDomainLinOSS
       init_args:
-        d_input: 2 # H1, L1
+        time_in_features: 2 # H1, L1
+        time_hidden_dim: 32
+        time_num_blocks: 3
+        time_dropout_rate: 0.1
+        time_state_dim: 32
+        time_r_min: 0.9
+        time_theta_max: 3.14159265359
+        time_num_res_blocks: 1
+        time_conv_kernel_size: 4
+        time_conv_position: pre
+        resnet_layers: [2, 2, 2]
+        resnet_latent_dim: 64
+        resnet_kernel_size: 7
+        resnet_norm_groups: 16
+        mlp_width: 64
+        mlp_depth: 2
         d_output: 2 # chirp_mass mean + log-var
-        d_model: 64
-        d_state: 64
-        n_layers: 4
-        dropout: 0.2
-        dt_min: 1.0e-3
-        dt_max: 5.0
-        lr: 1.0e-3 # SSM parameter learning rate
-    d_output: 2 # must match arch d_output
+        seed: 0
+    d_output: 2
     normalize_input: true
     y_mean: [1.2] # centre of BNS chirp_mass prior [0.87, 2.22]
     y_std: [0.35] # approx std of uniform [0.87, 2.22]
-    base_lr: 1e-4
+    learning_rate: 1e-4
     weight_decay: 0.01
     warmup_steps: 1000
+    max_steps: 3000000
+    clip_grad_norm: 10.0
     beta_nll: 0.3
     lambda_spread: 0.3
+    seed: 42
     metric:
       class_path: train.metrics.TimeSlideAUROC
       init_args:
@@ -62,10 +74,10 @@ data:
     snr_sampler:
       class_path: train.augmentations.SnrSampler
       init_args:
-        max_min_snr: 30.0
+        max_min_snr: 8.0
         min_min_snr: 4.0
         max_snr: 100.0
-        decay_steps: 30000
+        decay_steps: 10000
         distribution_type: uniform
 
     waveform_sampler:
@@ -105,7 +117,7 @@ trainer:
   logger:
     - class_path: train.callbacks.AframeWandbLogger
       init_args:
-        name: "aframe_regression"
+        name: "aframe_linoss_regression"
         save_dir: outputs
         project: "aframe_regression"
   callbacks:
@@ -118,7 +130,7 @@ trainer:
         mode: min
         save_top_k: 1
         save_last: true
-        filename: "bns_regression_gaussnll_{epoch:02d}"
+        filename: "bns_linoss_regression_gaussnll_{epoch:02d}"
         auto_insert_metric_name: false
 
     - class_path: lightning.pytorch.callbacks.ModelCheckpoint
@@ -126,7 +138,7 @@ trainer:
         monitor: val/valid_auroc_epoch
         mode: max
         save_top_k: 3
-        filename: "bns_regression_auroc_{epoch:02d}"
+        filename: "bns_linoss_regression_auroc_{epoch:02d}"
         auto_insert_metric_name: false
 
     - class_path: lightning.pytorch.callbacks.LearningRateMonitor

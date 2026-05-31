@@ -349,6 +349,65 @@ def jax_apply_focal_hnm_training_step(
     return new_model, new_state, new_opt_state, {"loss": loss}
 
 
+def _beta_nll_loss(
+    mean: Array, target: Array, var: Array, beta: float
+) -> Array:
+    """Gaussian NLL with stop-gradient variance weighting (BetaNLL)."""
+    nll = 0.5 * (jnp.log(var) + (target - mean) ** 2 / var)
+    return jnp.mean(jax.lax.stop_gradient(var) ** beta * nll)
+
+
+def jax_regression_loss_fn(
+    diff_model: eqx.Module,
+    static_model: eqx.Module,
+    state: eqx.nn.State,
+    X: Array,
+    chirp_mass: Array,
+    beta: float,
+    lambda_spread: float,
+    key: PRNGKeyArray,
+) -> tuple[Array, tuple]:
+    model = eqx.combine(diff_model, static_model)
+    outputs, new_state = jax_fwd_batch(model, X, state, key)  # (B, d_output)
+    n_vars = outputs.shape[-1] // 2
+    mean = outputs[:, :n_vars]
+    var = jax.nn.softplus(outputs[:, n_vars:])
+    nll = _beta_nll_loss(mean, chirp_mass, var, beta)
+    spread = jnp.mean(
+        jax.nn.softplus(jnp.var(chirp_mass, axis=0) - jnp.var(mean, axis=0))
+    )
+    loss = nll + lambda_spread * spread
+    return loss, (new_state, nll, spread, mean, var)
+
+
+@eqx.filter_jit
+def jax_apply_regression_training_step(
+    model: eqx.Module,
+    model_filter_spec,
+    state: eqx.nn.State,
+    X: Array,
+    chirp_mass: Array,
+    beta: float,
+    lambda_spread: float,
+    opt_state,
+    opt_update,
+    key: PRNGKeyArray,
+) -> tuple[eqx.Module, eqx.nn.State, object, dict]:
+    diff_model, static_model = eqx.partition(model, model_filter_spec)
+    (loss, (new_state, nll, spread, mean, var)), grads = eqx.filter_value_and_grad(
+        jax_regression_loss_fn, has_aux=True
+    )(diff_model, static_model, state, X, chirp_mass, beta, lambda_spread, key)
+    updates, new_opt_state = opt_update(grads, opt_state, diff_model)
+    new_model = eqx.combine(eqx.apply_updates(diff_model, updates), static_model)
+    return new_model, new_state, new_opt_state, {
+        "loss": loss,
+        "nll": nll,
+        "spread": spread,
+        "mean": mean,
+        "var": var,
+    }
+
+
 @eqx.filter_jit
 def jax_inference(
     model: eqx.Module,
